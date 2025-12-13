@@ -333,25 +333,29 @@ function doGet(e) {
 
 ### Step 1: Prepare Your Horizontal Spreadsheet
 
-**Add date headers to existing workout columns** (One-time manual setup):
+1. **Create tabs** with exact names:
+   - Phase 2: `Upper Body 1 (Phase 2)`, `Lower Body 1 (Phase 2)`, `Upper Body 2 (Phase 2)`, `Lower Body 2 (Phase 2)`
+   - Phase 1: `Workout A (Phase 1)`, `Workout B (Phase 1)`
 
-1. Open your Google Sheet with horizontal workout tracking
-2. For each existing R/W column pair that has workout data:
-   - Select the 2 cells in Row 1 above that R/W pair (e.g., cells B1:C1)
-   - Right-click → **Merge cells**
-   - Enter the workout date in format **YYYY-MM-DD** (e.g., "2025-12-11")
-3. Verify Row 2 has "R | W" headers for all column pairs
-4. Verify Column A has exercise names followed by SET labels (e.g., "SET 1: 8-10")
+2. **Set up each tab structure:**
+   - **Row 1**: Leave empty (PWA auto-creates dates when you sync workouts)
+   - **Row 2**: Add "R | W" headers starting from Column B (repeat for each date column)
+   - **Row 3+**: Add exercise names in Column A, followed by SET labels (e.g., "SET 1: 8-10")
 
-**Example after setup:**
+3. **If you have existing workout data:** Add dates to existing columns
+   - For each R/W column pair with data, select 2 cells in Row 1 above it
+   - Right-click → Merge cells → Enter date (YYYY-MM-DD format, e.g., "2025-12-11")
+
+**Example structure:**
 ```
-Row 1:  | Upper Body 1 | 2025-12-11     | 2025-12-13     |
-Row 2:  |              | R    | W       | R    | W       |
-Row 3:  | Incline DB   |      |         |      |         |
-Row 4:  | SET 1: 8-10  | 10   | 22.5    | 10   | 25      |
+Row 1:  | Upper Body 1 |                | 2025-12-11     | (PWA adds more dates)
+Row 2:  |              | R    | W       | R    | W       | R    | W
+Row 3:  | Incline DB   |      |         |      |         |      |
+Row 4:  | SET 1: 8-10  |      |         | 10   | 22.5    |      |
+Row 5:  | SET 2: 8-10  |      |         | 9    | 22.5    |      |
 ```
 
-⚠️ **Important**: Future workout dates will be auto-created by the PWA!
+✅ **PWA auto-creates new date columns** when you sync workouts (no manual date setup needed for new workouts)
 
 ### Step 2: Open Apps Script
 1. Open your Google Sheet
