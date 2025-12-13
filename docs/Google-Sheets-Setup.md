@@ -103,14 +103,6 @@ function setupWorkoutSheet() {
 
   // Create each workout tab
   Object.keys(phase2Workouts).forEach(tabName => {
-    // Delete default Sheet1 if it exists and this is the first tab
-    if (tabName === 'Upper Body 1 (Phase 2)') {
-      const defaultSheet = ss.getSheetByName('Sheet1');
-      if (defaultSheet) {
-        ss.deleteSheet(defaultSheet);
-      }
-    }
-
     // Create new sheet
     const sheet = ss.insertSheet(tabName);
 
@@ -142,6 +134,12 @@ function setupWorkoutSheet() {
     sheet.setFrozenRows(2);         // Freeze header rows
     sheet.setFrozenColumns(1);      // Freeze exercise names column
   });
+
+  // Delete default Sheet1 after creating all workout tabs
+  const defaultSheet = ss.getSheetByName('Sheet1');
+  if (defaultSheet) {
+    ss.deleteSheet(defaultSheet);
+  }
 
   Logger.log('✅ Workout sheets created successfully!');
   Logger.log('📝 Next: Deploy as Web App and copy the URL to PWA settings');
@@ -420,9 +418,10 @@ function doGet(e) {
 
 ### Step 2: Open Apps Script & Paste Code
 1. In your blank Google Sheet, click **Extensions → Apps Script**
-2. Delete the default `function myFunction() {}` code
-3. Copy the entire code block above (lines 63-322) and paste it
-4. Click **Save** (💾 disk icon)
+2. **Rename the project** (top-left corner): Click "Untitled project" → Enter "BWS Workout Tracker"
+3. Delete the default `function myFunction() {}` code
+4. Copy the entire code block above (lines 63-322) and paste it
+5. Click **Save** (💾 disk icon)
 
 ### Step 3: Run Setup Function (ONE TIME ONLY)
 1. In Apps Script editor, find the function dropdown (top toolbar)
@@ -431,7 +430,7 @@ function doGet(e) {
 4. **Authorize the script** when prompted:
    - Click "Review permissions"
    - Choose your Google account
-   - Click "Advanced" → "Go to BWS Workout Tracker (unsafe)"
+   - Click "Advanced" → "Go to BWS Workout Tracker (unsafe)" OR "Go to Untitled project (unsafe)"
    - Click "Allow"
 5. Wait 5-10 seconds for setup to complete
 6. Check "Execution log" at bottom - should show: `✅ Workout sheets created successfully!`
