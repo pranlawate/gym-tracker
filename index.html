@@ -9020,10 +9020,52 @@
         }
 
         function completeWorkout() {
-            if (confirm('Mark today\'s workout as complete?')) {
-                alert('Great job! 💪\n\nRemember:\n- Log your lifts\n- Eat protein\n- Sleep 7-9 hours');
-                saveProgress();
-            }
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.style.zIndex = '10001';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">✓ Complete Workout?</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: #ccc; margin-bottom: 20px;">Mark today's workout as complete?</p>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="this.closest('.modal').remove()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+                            <button onclick="confirmCompleteWorkout()" style="flex: 1; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Complete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function confirmCompleteWorkout() {
+            // Close confirmation modal
+            document.querySelector('.modal.active').remove();
+
+            // Show success message
+            const successModal = document.createElement('div');
+            successModal.className = 'modal active';
+            successModal.style.zIndex = '10001';
+            successModal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">💪 Great Job!</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: #ccc; margin-bottom: 15px;">Remember:</p>
+                        <ul style="color: #aaa; margin: 0 0 20px 20px; padding: 0;">
+                            <li style="margin-bottom: 8px;">Log your lifts</li>
+                            <li style="margin-bottom: 8px;">Eat protein</li>
+                            <li>Sleep 7-9 hours</li>
+                        </ul>
+                        <button onclick="this.closest('.modal').remove()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Got It!</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(successModal);
+            saveProgress();
         }
 
         // ===== GOOGLE SHEETS INTEGRATION =====
@@ -9976,7 +10018,27 @@
             localStorage.setItem('exercise-alternates', JSON.stringify(alternates));
 
             closeProgressionModal();
-            alert(`Exercise changed to: ${newExercise}\n\nThis will be saved and remembered for future workouts.`);
+
+            // Show success modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.style.zIndex = '10001';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">✅ Exercise Changed</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: #ccc; margin-bottom: 15px;">Exercise changed to:</p>
+                        <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #667eea;">
+                            <p style="margin: 0; color: #667eea; font-weight: 600;">${newExercise}</p>
+                        </div>
+                        <p style="font-size: 13px; color: #888; margin-bottom: 20px;">This will be saved and remembered for future workouts.</p>
+                        <button onclick="this.closest('.modal').remove()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Got It!</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
         function closeProgressionModal() {
