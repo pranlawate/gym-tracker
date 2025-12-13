@@ -10552,13 +10552,47 @@
             // Check if Google Sheets is already connected
             const sheetsURL = getSheetsURL();
             if (!sheetsURL) {
-                // Prompt user to connect Google Sheets
+                // Prompt user to connect Google Sheets with custom modal
                 setTimeout(() => {
-                    if (confirm('📊 Connect Google Sheets for workout tracking?\n\n✅ Sync workouts across devices\n✅ Load previous weights/reps\n✅ Track progress over time\n\nYou can skip this and set it up later in Settings.')) {
-                        showGoogleSheetsSetup();
-                    }
+                    showSheetsPromptModal();
                 }, 500);
             }
+        }
+
+        function showSheetsPromptModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.style.zIndex = '10001';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 450px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">📊 Connect Google Sheets?</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: #ccc; margin-bottom: 20px;">Sync your workouts to Google Sheets for:</p>
+                        <div style="background: #1a1a2e; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 20px; margin-right: 10px;">✅</span>
+                                <span style="color: #aaa;">Sync workouts across devices</span>
+                            </div>
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 20px; margin-right: 10px;">✅</span>
+                                <span style="color: #aaa;">Load previous weights/reps</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="font-size: 20px; margin-right: 10px;">✅</span>
+                                <span style="color: #aaa;">Track progress over time</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: #888; margin-bottom: 20px;">You can skip this and set it up later in Settings.</p>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="this.closest('.modal').remove()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Skip</button>
+                            <button onclick="this.closest('.modal').remove(); showGoogleSheetsSetup();" style="flex: 2; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Set Up Now</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
         // Check if user has already selected a phase on page load
