@@ -1,0 +1,14 @@
+# Documentation (except README)
+docs/
+*.md
+!README.md
+
+# Python scripts
+*.py
+extract_steps.py
+update_phase1.py
+DOWNLOADED_VIDEOS_UPDATE_LIST.md
+
+# Backups
+backups/
+*.backup*
