@@ -418,7 +418,8 @@ function doGet(e) {
 
 ### Step 2: Open Apps Script & Paste Code
 1. In your blank Google Sheet, click **Extensions → Apps Script**
-2. **Rename the project** (top-left corner): Click "Untitled project" → Enter "BWS Workout Tracker"
+2. **Rename the Apps Script project** (top-left corner in Apps Script editor): Click "Untitled project" → Enter "BWS Workout Tracker"
+   - ⚠️ Note: This is separate from the Google Sheet name - you need to rename it in the Apps Script editor
 3. Delete the default `function myFunction() {}` code
 4. Copy the entire code block above (lines 63-322) and paste it
 5. Click **Save** (💾 disk icon)
