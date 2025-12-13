@@ -10548,6 +10548,17 @@
                     btn.click();
                 }
             });
+
+            // Check if Google Sheets is already connected
+            const sheetsURL = getSheetsURL();
+            if (!sheetsURL) {
+                // Prompt user to connect Google Sheets
+                setTimeout(() => {
+                    if (confirm('📊 Connect Google Sheets for workout tracking?\n\n✅ Sync workouts across devices\n✅ Load previous weights/reps\n✅ Track progress over time\n\nYou can skip this and set it up later in Settings.')) {
+                        showGoogleSheetsSetup();
+                    }
+                }, 500);
+            }
         }
 
         // Check if user has already selected a phase on page load
