@@ -84,7 +84,7 @@ Progressive Web App (PWA) for tracking Built With Science (BWS) Beginner Program
 │   ├── PROGRESSION-TRACKING-GUIDE.md       # Progression strategies for beginners
 │   ├── VIDEO-LIBRARY.md                    # Catalog of 69 exercise videos
 │   ├── Gym-Trainer-vs-BWS-Comparison.md    # Personal trainer program analysis
-│   └── GOOGLE-SHEETS-UPDATED-SCRIPT.md     # Apps Script for data sync
+│   └── Google-Sheets-Setup.md              # Apps Script for horizontal layout sync
 ├── Sources/                      # BWS official PDFs (9 files)
 └── Exercise-Videos/              # 69 MP4 exercise demonstrations
 ```
