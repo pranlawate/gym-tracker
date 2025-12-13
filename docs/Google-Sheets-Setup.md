@@ -518,15 +518,22 @@ function doGet(e) {
 7. **Go back to your spreadsheet** - you'll see 4 new tabs with all exercises and rep ranges already filled in!
 
 ### Step 4: Deploy as Web App
-1. Click **Deploy → New deployment**
-2. Click gear icon ⚙️ → Select **Web app**
-3. Settings:
-   - Description: "BWS Horizontal Layout Tracker"
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-4. Click **Deploy**
-5. Authorize if prompted
-6. **Copy the Web App URL** (looks like: `https://script.google.com/macros/s/.../exec`)
+1. Click **Deploy → New deployment** (top-right corner)
+2. Click the **gear icon** ⚙️ next to "Select type"
+3. Select **Web app** from the dropdown
+4. Fill in the deployment settings:
+   - **Description:** Type "BWS Horizontal Layout Tracker" (or any name you prefer)
+   - **Execute as:** Select **Me** (your Google account email)
+   - **Who has access:** Select **Anyone** (important - allows PWA to access the script)
+5. Click **Deploy** button
+6. **Authorize if prompted:**
+   - Click "Authorize access"
+   - Choose your Google account
+   - Click "Advanced" → "Go to BWS Workout Tracker (unsafe)" (this is safe - it's your own script)
+   - Click "Allow"
+7. **Copy the Web App URL** from the popup (looks like: `https://script.google.com/macros/s/AKfy...xyz/exec`)
+   - Click the "Copy" button or select and copy the URL manually
+   - Keep this URL - you'll need it in the next step
 
 ### Step 5: Update Your PWA
 1. Open PWA in browser
