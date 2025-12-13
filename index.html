@@ -911,13 +911,17 @@
             <div style="padding: 10px; border-bottom: 1px solid #333; margin-bottom: 10px;">
                 <div style="font-size: 12px; color: #888; margin-bottom: 8px;">Current Program:</div>
                 <div class="phase-selector">
-                    <button class="phase-btn active" data-phase="2">Phase 2</button>
                     <button class="phase-btn" data-phase="1">Phase 1</button>
+                    <button class="phase-btn active" data-phase="2">Phase 2</button>
                 </div>
             </div>
             <button class="settings-btn" onclick="showRPEGuide()">📊 What is RPE?</button>
             <button class="settings-btn" onclick="openPlateCalculator()">🧮 Plate Calculator</button>
-            <button class="settings-btn" onclick="testSheetsConnection()">🔗 Test Google Sheets Connection</button>
+            <button class="settings-btn" onclick="showGoogleSheetsSetup()" id="sheets-setup-btn">
+                <span id="sheets-status-icon">🔗</span>
+                <span id="sheets-status-text">Connect Google Sheets</span>
+            </button>
+            <button class="settings-btn" onclick="testSheetsConnection()" id="test-sheets-btn" style="display: none;">✅ Test Connection</button>
             <button class="settings-btn" onclick="clearLocalData()">🗑️ Clear Local Data</button>
         </div>
         <div class="today" id="today-date"></div>
@@ -6212,6 +6216,123 @@
         </div>
     </div>
 
+    <!-- Google Sheets Setup Modal -->
+    <div class="modal" id="sheets-setup-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🔗 Connect Google Sheets</h2>
+                <button class="modal-close" onclick="closeGoogleSheetsSetup()">&times;</button>
+            </div>
+            <div style="padding: 20px; color: #aaa; line-height: 1.8;">
+                <div id="sheets-setup-step1">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📝 Step 1: Create Your Google Sheet</h3>
+                    <ol style="margin: 0 0 20px 20px; padding: 0;">
+                        <li style="margin-bottom: 10px;">Open <a href="https://sheets.google.com" target="_blank" style="color: #667eea;">Google Sheets</a></li>
+                        <li style="margin-bottom: 10px;">Create a new blank spreadsheet</li>
+                        <li style="margin-bottom: 10px;">Name it "BWS Workout Log" (or any name you prefer)</li>
+                        <li style="margin-bottom: 10px;">Keep this sheet open - you'll need it in Step 2</li>
+                    </ol>
+                    <button onclick="showSheetsStep2()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;">
+                        Continue to Step 2 →
+                    </button>
+                </div>
+
+                <div id="sheets-setup-step2" style="display: none;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">⚙️ Step 2: Set Up Apps Script</h3>
+                    <ol style="margin: 0 0 20px 20px; padding: 0;">
+                        <li style="margin-bottom: 10px;">In your Google Sheet, click <strong>Extensions → Apps Script</strong></li>
+                        <li style="margin-bottom: 10px;">Delete any existing code in the editor</li>
+                        <li style="margin-bottom: 10px;">Copy the Apps Script code (see docs/GOOGLE-SHEETS-UPDATED-SCRIPT.md)</li>
+                        <li style="margin-bottom: 10px;">Paste it into the Apps Script editor</li>
+                        <li style="margin-bottom: 10px;">Click the <strong>Save</strong> icon (💾)</li>
+                    </ol>
+                    <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #667eea;">
+                        <div style="color: #667eea; font-weight: bold; margin-bottom: 8px;">💡 Need the Script Code?</div>
+                        <p style="margin: 0; font-size: 13px;">The Apps Script code is in <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px;">docs/Google-Sheets-Setup.md</code> in this repository.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showSheetsStep1()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            ← Back
+                        </button>
+                        <button onclick="showSheetsStep3()" style="flex: 2; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;">
+                            Continue to Step 3 →
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sheets-setup-step3" style="display: none;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🚀 Step 3: Deploy the Web App</h3>
+                    <ol style="margin: 0 0 20px 20px; padding: 0;">
+                        <li style="margin-bottom: 10px;">In Apps Script editor, click <strong>Deploy → New deployment</strong></li>
+                        <li style="margin-bottom: 10px;">Click the gear icon ⚙️ next to "Select type"</li>
+                        <li style="margin-bottom: 10px;">Choose <strong>"Web app"</strong></li>
+                        <li style="margin-bottom: 10px;">Set <strong>"Execute as"</strong> to <strong>"Me"</strong></li>
+                        <li style="margin-bottom: 10px;">Set <strong>"Who has access"</strong> to <strong>"Anyone"</strong></li>
+                        <li style="margin-bottom: 10px;">Click <strong>"Deploy"</strong></li>
+                        <li style="margin-bottom: 10px;">Authorize the script (you may see a security warning - click Advanced → Go to [Your Script])</li>
+                        <li style="margin-bottom: 10px;">Copy the <strong>Web app URL</strong> that appears</li>
+                    </ol>
+                    <div style="background: #2e1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #f44336;">
+                        <div style="color: #f44336; font-weight: bold; margin-bottom: 8px;">⚠️ Important Security Note</div>
+                        <p style="margin: 0; font-size: 13px;">This URL is private to you. Don't share it publicly - it allows writing to your Google Sheet!</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showSheetsStep2()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            ← Back
+                        </button>
+                        <button onclick="showSheetsStep4()" style="flex: 2; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;">
+                            Continue to Step 4 →
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sheets-setup-step4" style="display: none;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">✅ Step 4: Connect to This App</h3>
+                    <p style="margin-bottom: 15px;">Paste your Google Apps Script Web App URL below:</p>
+                    <input type="text" id="sheets-url-input" placeholder="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" style="width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #e0e0e0; font-size: 14px; margin-bottom: 15px; box-sizing: border-box;">
+
+                    <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #4caf50;">
+                        <div style="color: #4caf50; font-weight: bold; margin-bottom: 8px;">💡 Where to Find Your URL?</div>
+                        <p style="margin: 0; font-size: 13px;">After deploying, Apps Script shows a "Web app URL". It looks like: <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px; font-size: 12px;">https://script.google.com/macros/s/[ID]/exec</code></p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showSheetsStep3()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            ← Back
+                        </button>
+                        <button onclick="saveSheetsURL()" style="flex: 2; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;">
+                            💾 Save & Test Connection
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sheets-setup-success" style="display: none; text-align: center;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <h3 style="color: #4caf50; margin-bottom: 15px;">Google Sheets Connected!</h3>
+                    <p style="margin-bottom: 20px;">Your workout data will now sync to your Google Sheet.</p>
+                    <button onclick="closeGoogleSheetsSetup()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;">
+                        Done
+                    </button>
+                </div>
+
+                <div id="sheets-setup-error" style="display: none;">
+                    <div style="background: #2e1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #f44336;">
+                        <div style="color: #f44336; font-weight: bold; margin-bottom: 8px;">❌ Connection Failed</div>
+                        <p id="sheets-error-message" style="margin: 0; font-size: 13px;"></p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showSheetsStep4(); document.getElementById('sheets-setup-error').style.display='none';" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            ← Try Again
+                        </button>
+                        <button onclick="closeGoogleSheetsSetup()" style="flex: 1; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Exercise History Modal -->
     <div class="modal" id="exercise-history-modal">
         <div class="modal-content">
@@ -6241,9 +6362,15 @@
 
     <script>
         // ===== GOOGLE SHEETS CONFIGURATION =====
-        // After setting up Google Sheets API, paste your Web App URL below:
-        // See GOOGLE-SHEETS-SETUP.md for instructions
-        const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwp2Q2O_uxyafQxbXnt_PwthmyGd5tevnak4qu5fnOX4fIbrxrQTKPBjlirn7JnAP8n2Q/exec';  // ADD YOUR URL HERE
+        // Google Sheets URL is now stored in localStorage for security
+        // Users must set up their own Google Sheets integration
+        function getSheetsURL() {
+            return localStorage.getItem('sheets_web_app_url') || '';
+        }
+
+        function setSheetsURL(url) {
+            localStorage.setItem('sheets_web_app_url', url);
+        }
 
         // ===== EXERCISE PROGRESSION DATABASE (BOX-BASED STRUCTURE) =====
         const EXERCISE_PROGRESSION = {
@@ -8877,8 +9004,11 @@
         // ===== GOOGLE SHEETS INTEGRATION =====
 
         async function syncToSheets() {
-            if (!SHEETS_WEB_APP_URL) {
-                alert('⚠️ Google Sheets not configured!\n\nPlease follow GOOGLE-SHEETS-SETUP.md to set up your Google Sheet, then paste the Web App URL at the top of this file.');
+            const sheetsURL = getSheetsURL();
+            if (!sheetsURL) {
+                if (confirm('⚠️ Google Sheets not connected!\n\nWould you like to set it up now?')) {
+                    showGoogleSheetsSetup();
+                }
                 return;
             }
 
@@ -8897,7 +9027,7 @@
             try {
                 // Send each completed set to Google Sheets
                 for (const entry of workoutData) {
-                    const response = await fetch(SHEETS_WEB_APP_URL, {
+                    const response = await fetch(sheetsURL, {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
@@ -8968,8 +9098,11 @@
         }
 
         async function loadLastWorkout() {
-            if (!SHEETS_WEB_APP_URL) {
-                alert('⚠️ Google Sheets not configured!\n\nPlease follow GOOGLE-SHEETS-SETUP.md to set up your Google Sheet.');
+            const sheetsURL = getSheetsURL();
+            if (!sheetsURL) {
+                if (confirm('⚠️ Google Sheets not connected!\n\nLoad Last Workout requires Google Sheets integration. Would you like to set it up now?')) {
+                    showGoogleSheetsSetup();
+                }
                 return;
             }
 
@@ -8980,7 +9113,7 @@
             }
 
             try {
-                const response = await fetch(SHEETS_WEB_APP_URL);
+                const response = await fetch(sheetsURL);
                 const data = await response.json();
 
                 if (data.status === 'success' && data.workouts && data.workouts.length > 0) {
@@ -9056,15 +9189,16 @@
         }
 
         async function testSheetsConnection() {
-            if (!SHEETS_WEB_APP_URL) {
-                alert('⚠️ Please add your Google Sheets Web App URL first!\n\nSee GOOGLE-SHEETS-SETUP.md for instructions.');
+            const sheetsURL = getSheetsURL();
+            if (!sheetsURL) {
+                alert('⚠️ Google Sheets not connected!\n\nPlease set up Google Sheets first.');
                 return;
             }
 
             alert('Testing connection to Google Sheets...');
 
             try {
-                const response = await fetch(SHEETS_WEB_APP_URL);
+                const response = await fetch(sheetsURL);
                 const data = await response.json();
 
                 if (data.status === 'success') {
@@ -9074,6 +9208,131 @@
                 }
             } catch (error) {
                 alert('❌ Connection failed!\n\nError: ' + error.message + '\n\nCheck:\n- Web App URL is correct\n- Internet connection\n- Deployment is set to "Anyone"');
+            }
+        }
+
+        // ===== GOOGLE SHEETS SETUP WIZARD =====
+
+        function showGoogleSheetsSetup() {
+            const modal = document.getElementById('sheets-setup-modal');
+            if (modal) {
+                // Reset to step 1 and hide all other steps
+                showSheetsStep1();
+                modal.classList.add('active');
+
+                // Update button status
+                updateSheetsButtonStatus();
+            }
+        }
+
+        function closeGoogleSheetsSetup() {
+            const modal = document.getElementById('sheets-setup-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function showSheetsStep1() {
+            hideAllSheetsSteps();
+            document.getElementById('sheets-setup-step1').style.display = 'block';
+        }
+
+        function showSheetsStep2() {
+            hideAllSheetsSteps();
+            document.getElementById('sheets-setup-step2').style.display = 'block';
+        }
+
+        function showSheetsStep3() {
+            hideAllSheetsSteps();
+            document.getElementById('sheets-setup-step3').style.display = 'block';
+        }
+
+        function showSheetsStep4() {
+            hideAllSheetsSteps();
+            const step4 = document.getElementById('sheets-setup-step4');
+            step4.style.display = 'block';
+
+            // Pre-fill URL if already exists
+            const existingURL = getSheetsURL();
+            if (existingURL) {
+                document.getElementById('sheets-url-input').value = existingURL;
+            }
+        }
+
+        function hideAllSheetsSteps() {
+            document.getElementById('sheets-setup-step1').style.display = 'none';
+            document.getElementById('sheets-setup-step2').style.display = 'none';
+            document.getElementById('sheets-setup-step3').style.display = 'none';
+            document.getElementById('sheets-setup-step4').style.display = 'none';
+            document.getElementById('sheets-setup-success').style.display = 'none';
+            document.getElementById('sheets-setup-error').style.display = 'none';
+        }
+
+        async function saveSheetsURL() {
+            const urlInput = document.getElementById('sheets-url-input');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter your Google Apps Script URL');
+                return;
+            }
+
+            // Basic validation
+            if (!url.startsWith('https://script.google.com/macros/s/') || !url.endsWith('/exec')) {
+                alert('⚠️ Invalid URL format!\n\nThe URL should look like:\nhttps://script.google.com/macros/s/YOUR_ID/exec');
+                return;
+            }
+
+            // Save the URL
+            setSheetsURL(url);
+
+            // Test the connection
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Success!
+                    hideAllSheetsSteps();
+                    document.getElementById('sheets-setup-success').style.display = 'block';
+                    updateSheetsButtonStatus();
+                } else {
+                    // Connection issue
+                    hideAllSheetsSteps();
+                    document.getElementById('sheets-setup-error').style.display = 'block';
+                    document.getElementById('sheets-error-message').textContent =
+                        'The URL is valid but returned an error: ' + (data.message || 'Unknown error');
+                }
+            } catch (error) {
+                // Failed to connect
+                hideAllSheetsSteps();
+                document.getElementById('sheets-setup-error').style.display = 'block';
+                document.getElementById('sheets-error-message').textContent =
+                    'Could not connect to Google Sheets. Please check:\n\n' +
+                    '• URL is correct (copy-paste from Apps Script)\n' +
+                    '• Deployment is set to "Who has access: Anyone"\n' +
+                    '• Internet connection is working\n\n' +
+                    'Error: ' + error.message;
+            }
+        }
+
+        function updateSheetsButtonStatus() {
+            const sheetsURL = getSheetsURL();
+            const setupBtn = document.getElementById('sheets-setup-btn');
+            const testBtn = document.getElementById('test-sheets-btn');
+            const statusIcon = document.getElementById('sheets-status-icon');
+            const statusText = document.getElementById('sheets-status-text');
+
+            if (sheetsURL) {
+                // Connected
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'Google Sheets Connected';
+                testBtn.style.display = 'block';
+            } else {
+                // Not connected
+                statusIcon.textContent = '🔗';
+                statusText.textContent = 'Connect Google Sheets';
+                testBtn.style.display = 'none';
             }
         }
 
@@ -10243,6 +10502,9 @@
                 // First time user - show welcome modal
                 welcomeModal.classList.add('active');
             }
+
+            // Update Google Sheets button status
+            updateSheetsButtonStatus();
         })();
 
         // Install prompt
