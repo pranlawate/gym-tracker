@@ -9073,15 +9073,20 @@
         async function syncToSheets() {
             const sheetsURL = getSheetsURL();
             if (!sheetsURL) {
-                if (confirm('⚠️ Google Sheets not connected!\n\nWould you like to set it up now?')) {
-                    showGoogleSheetsSetup();
-                }
+                showConfirm(
+                    'Google Sheets not connected!\n\nWould you like to set it up now?',
+                    () => showGoogleSheetsSetup(),
+                    'Google Sheets Required',
+                    '📊',
+                    'Set Up Now',
+                    'Cancel'
+                );
                 return;
             }
 
             const workoutData = collectWorkoutData();
             if (workoutData.length === 0) {
-                alert('No workout data to sync. Complete at least one set first!');
+                showAlert('No workout data to sync. Complete at least one set first!', 'No Data', '📝');
                 return;
             }
 
@@ -9102,13 +9107,13 @@
                     });
                 }
 
-                alert('✅ Workout synced to Google Sheets!\n\n' + workoutData.length + ' sets logged.');
+                showAlert('Workout synced to Google Sheets!\n\n' + workoutData.length + ' sets logged.', 'Success', '✅');
 
                 // Store sync timestamp
                 localStorage.setItem('last-sync', new Date().toISOString());
             } catch (error) {
                 console.error('Sync error:', error);
-                alert('❌ Failed to sync to Google Sheets.\n\nCheck:\n- Internet connection\n- Web App URL is correct\n- Google Sheet is accessible');
+                showAlert('Failed to sync to Google Sheets.\n\nCheck:\n• Internet connection\n• Web App URL is correct\n• Google Sheet is accessible', 'Sync Failed', '❌');
             } finally {
                 if (syncBtn) {
                     syncBtn.textContent = '📤 Sync to Sheets';
@@ -9167,9 +9172,14 @@
         async function loadLastWorkout() {
             const sheetsURL = getSheetsURL();
             if (!sheetsURL) {
-                if (confirm('⚠️ Google Sheets not connected!\n\nLoad Last Workout requires Google Sheets integration. Would you like to set it up now?')) {
-                    showGoogleSheetsSetup();
-                }
+                showConfirm(
+                    'Google Sheets not connected!\n\nLoad Last Workout requires Google Sheets integration. Would you like to set it up now?',
+                    () => showGoogleSheetsSetup(),
+                    'Google Sheets Required',
+                    '📊',
+                    'Set Up Now',
+                    'Cancel'
+                );
                 return;
             }
 
@@ -9186,11 +9196,11 @@
                 if (data.status === 'success' && data.workouts && data.workouts.length > 0) {
                     showLastWorkoutData(data.workouts);
                 } else {
-                    alert('No previous workout data found in Google Sheets.');
+                    showAlert('No previous workout data found in Google Sheets.', 'No Data', '📭');
                 }
             } catch (error) {
                 console.error('Load error:', error);
-                alert('❌ Failed to load from Google Sheets.\n\nCheck:\n- Internet connection\n- Web App URL is correct\n- You have synced at least one workout');
+                showAlert('Failed to load from Google Sheets.\n\nCheck:\n• Internet connection\n• Web App URL is correct\n• You have synced at least one workout', 'Load Failed', '❌');
             } finally {
                 if (loadBtn) {
                     loadBtn.textContent = '📥 Load Last Workout';
@@ -9249,32 +9259,40 @@
             });
 
             if (foundMatches > 0) {
-                alert(`✅ Loaded last workout!\n\n${foundMatches} exercises prefilled.\n\nCheck the weight placeholders for suggestions.`);
+                showAlert(`Loaded last workout!\n\n${foundMatches} exercises prefilled.\n\nCheck the weight placeholders for suggestions.`, 'Success', '✅');
             } else {
-                alert('No matching exercises found from your last workout.');
+                showAlert('No matching exercises found from your last workout.', 'No Matches', '🔍');
             }
         }
 
         async function testSheetsConnection() {
             const sheetsURL = getSheetsURL();
             if (!sheetsURL) {
-                alert('⚠️ Google Sheets not connected!\n\nPlease set up Google Sheets first.');
+                showAlert('Google Sheets not connected!\n\nPlease set up Google Sheets first.', 'Not Connected', '⚠️');
                 return;
             }
 
-            alert('Testing connection to Google Sheets...');
+            showAlert('Testing connection to Google Sheets...', 'Testing', '⏳');
 
             try {
                 const response = await fetch(sheetsURL);
                 const data = await response.json();
 
+                // Close the testing modal
+                const testingModal = document.querySelector('.modal.active');
+                if (testingModal) testingModal.remove();
+
                 if (data.status === 'success') {
-                    alert('✅ Connected to Google Sheets!\n\nYour setup is working correctly.\n\nWorkouts found: ' + (data.workouts?.length || 0));
+                    showAlert('Connected to Google Sheets!\n\nYour setup is working correctly.\n\nWorkouts found: ' + (data.workouts?.length || 0), 'Connection Successful', '✅');
                 } else {
-                    alert('⚠️ Connection issue:\n\n' + (data.message || 'Unknown error'));
+                    showAlert('Connection issue:\n\n' + (data.message || 'Unknown error'), 'Connection Issue', '⚠️');
                 }
             } catch (error) {
-                alert('❌ Connection failed!\n\nError: ' + error.message + '\n\nCheck:\n- Web App URL is correct\n- Internet connection\n- Deployment is set to "Anyone"');
+                // Close the testing modal
+                const testingModal = document.querySelector('.modal.active');
+                if (testingModal) testingModal.remove();
+
+                showAlert('Connection failed!\n\nError: ' + error.message + '\n\nCheck:\n• Web App URL is correct\n• Internet connection\n• Deployment is set to "Anyone"', 'Connection Failed', '❌');
             }
         }
 
@@ -9340,13 +9358,13 @@
             const url = urlInput.value.trim();
 
             if (!url) {
-                alert('Please enter your Google Apps Script URL');
+                showAlert('Please enter your Google Apps Script URL', 'URL Required', '⚠️');
                 return;
             }
 
             // Basic validation
             if (!url.startsWith('https://script.google.com/macros/s/') || !url.endsWith('/exec')) {
-                alert('⚠️ Invalid URL format!\n\nThe URL should look like:\nhttps://script.google.com/macros/s/YOUR_ID/exec');
+                showAlert('Invalid URL format!\n\nThe URL should look like:\nhttps://script.google.com/macros/s/YOUR_ID/exec', 'Invalid URL', '⚠️');
                 return;
             }
 
@@ -9406,6 +9424,57 @@
         function toggleSettings() {
             const panel = document.getElementById('settings-panel');
             panel.classList.toggle('active');
+        }
+
+        // Reusable styled alert function
+        function showAlert(message, title = '⚠️ Alert', icon = '⚠️') {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.style.zIndex = '10001';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">${icon} ${title}</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: #ccc; margin-bottom: 20px;">${message}</p>
+                        <button onclick="this.closest('.modal').remove()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">OK</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Reusable styled confirm function
+        function showConfirm(message, onConfirm, title = '⚠️ Confirm', icon = '⚠️', confirmText = 'Yes', cancelText = 'No') {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.style.zIndex = '10001';
+            const uniqueId = `confirm-btn-${Date.now()}`;
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">${icon} ${title}</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="color: #ccc; margin-bottom: 20px; white-space: pre-line;">${message}</p>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="this.closest('.modal').remove()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">${cancelText}</button>
+                            <button id="${uniqueId}" style="flex: 1; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">${confirmText}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Add event listener to confirm button
+            const confirmBtn = document.getElementById(uniqueId);
+            if (confirmBtn) {
+                confirmBtn.onclick = () => {
+                    modal.remove();
+                    onConfirm();
+                };
+            }
         }
 
         function clearLocalData() {
@@ -9638,7 +9707,7 @@
             const barWeight = parseFloat(document.getElementById('calc-bar-weight').value) || 20;
 
             if (!targetWeight || targetWeight <= barWeight) {
-                alert('Please enter a valid target weight greater than the bar weight.');
+                showAlert('Please enter a valid target weight greater than the bar weight.', 'Invalid Weight', '⚠️');
                 return;
             }
 
@@ -9950,7 +10019,7 @@
             delete alternates[exerciseId];
             localStorage.setItem('exercise-alternates', JSON.stringify(alternates));
 
-            alert(`Exercise reset to original: ${exerciseName}`);
+            showAlert(`Exercise reset to original: ${exerciseName}`, 'Reset Complete', '↩️');
         }
 
         function showProgressionModal(exerciseName, exerciseId, type) {
@@ -10057,7 +10126,7 @@
 
             const exerciseData = EXERCISE_PROGRESSION[baseExerciseName];
             if (!exerciseData || !exerciseData.progressionMethods || !exerciseData.progressionMethods[method]) {
-                alert('This progression method is not available yet.');
+                showAlert('This progression method is not available yet.', 'Not Available', '🔒');
                 selectElement.value = '';
                 return;
             }
@@ -10080,7 +10149,7 @@
             localStorage.setItem('progression-methods', JSON.stringify(methods));
 
             // Show tip
-            alert(`${methodInfo.name} applied!\n\n💡 Tip: ${methodInfo.tip}\n\nThis method will be saved for future workouts.`);
+            showAlert(`${methodInfo.name} applied!\n\n💡 Tip: ${methodInfo.tip}\n\nThis method will be saved for future workouts.`, 'Method Applied', '✅');
 
             // Reset select
             selectElement.value = '';
@@ -10141,7 +10210,7 @@
 
             const exerciseData = EXERCISE_PROGRESSION[baseExerciseName];
             if (!exerciseData || !exerciseData.boxes || !exerciseData.boxes[boxName]) {
-                alert('This exercise variant is not available yet.');
+                showAlert('This exercise variant is not available yet.', 'Not Available', '🔒');
                 selectElement.value = 'current';
                 return;
             }
@@ -10150,7 +10219,7 @@
             const selectedExercise = box.exercises[exerciseIndex];
 
             if (!selectedExercise) {
-                alert('Exercise not found.');
+                showAlert('Exercise not found.', 'Error', '❌');
                 selectElement.value = 'current';
                 return;
             }
@@ -10229,7 +10298,7 @@
             delete methods[exerciseId];
             localStorage.setItem('progression-methods', JSON.stringify(methods));
 
-            alert(`Exercise changed to: ${selectedExercise.name}\n\n${selectedExercise.desc}\n\nEquipment: ${selectedExercise.equipment}\n\nThe dropdown will update to show contextual options.`);
+            showAlert(`Exercise changed to: ${selectedExercise.name}\n\n${selectedExercise.desc}\n\nEquipment: ${selectedExercise.equipment}\n\nThe dropdown will update to show contextual options.`, 'Exercise Changed', '✅');
 
             // Repopulate dropdown with contextual options
             populateVariantDropdown(baseExerciseName, exerciseId);
@@ -10542,7 +10611,7 @@
                 // Look up exercise data
                 const exerciseData = EXERCISE_PROGRESSION[baseExerciseName];
                 if (!exerciseData || !exerciseData.boxes[difficulty]) {
-                    alert(`No ${difficulty} variant available for this exercise yet.`);
+                    showAlert(`No ${difficulty} variant available for this exercise yet.`, 'Not Available', '🔒');
                     this.value = 'normal'; // Reset to normal
                     return;
                 }
@@ -10552,7 +10621,7 @@
                 const newExercise = selectedBox.exercises[0]; // Use first exercise in that difficulty level
 
                 if (!newExercise) {
-                    alert(`No ${difficulty} variant available for this exercise yet.`);
+                    showAlert(`No ${difficulty} variant available for this exercise yet.`, 'Not Available', '🔒');
                     this.value = 'normal';
                     return;
                 }
@@ -10591,7 +10660,7 @@
                 localStorage.setItem('exercise-variants', JSON.stringify(variants));
 
                 // Show notification
-                alert(`✅ Exercise changed to: ${newExercise.name}\n\nDifficulty: ${selectedBox.label}\n${newExercise.note ? '\n' + newExercise.note : ''}`);
+                showAlert(`Exercise changed to: ${newExercise.name}\n\nDifficulty: ${selectedBox.label}\n${newExercise.note ? '\n' + newExercise.note : ''}`, 'Exercise Changed', '✅');
             });
         });
 
