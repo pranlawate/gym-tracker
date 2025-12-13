@@ -65,6 +65,88 @@ Replace the code in your Google Apps Script with this updated version:
 // Set your current phase here: 'phase1' or 'phase2'
 const CURRENT_PHASE = 'phase2';  // Change to 'phase1' when doing Phase 1
 
+// ===== ONE-TIME SETUP FUNCTION =====
+// Run this ONCE after creating a blank Google Sheet to auto-create all tabs and exercises
+function setupWorkoutSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Phase 2 workout structure with exact rep ranges from PWA
+  const phase2Workouts = {
+    'Upper Body 1 (Phase 2)': [
+      { name: 'Incline Dumbbell Press', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
+      { name: 'Pull-Ups', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8', 'SET 4: 6-8'] },
+      { name: 'Lean-Away Cable Lateral Raises', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Dumbbell Pullovers', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Incline Overhead Dumbbell Extensions', sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'] }
+    ],
+    'Lower Body 1 (Phase 2)': [
+      { name: 'Back Squat', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'] },
+      { name: 'Bulgarian Split Squat', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
+      { name: 'Swiss Ball Leg Curls', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Single Leg Weighted Calf Raise', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] }
+    ],
+    'Upper Body 2 (Phase 2)': [
+      { name: 'Barbell Bench Press', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'] },
+      { name: 'Seated Cable Row', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
+      { name: 'Standing Overhead Press', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
+      { name: 'Face Pulls', sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'] },
+      { name: 'Dip Push-Ups', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Incline Dumbbell Curls', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] }
+    ],
+    'Lower Body 2 (Phase 2)': [
+      { name: 'Deadlift', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'] },
+      { name: 'Leg Press', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Reverse Lunges', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Seated Weighted Calf Raise', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] }
+    ]
+  };
+
+  // Create each workout tab
+  Object.keys(phase2Workouts).forEach(tabName => {
+    // Delete default Sheet1 if it exists and this is the first tab
+    if (tabName === 'Upper Body 1 (Phase 2)') {
+      const defaultSheet = ss.getSheetByName('Sheet1');
+      if (defaultSheet) {
+        ss.deleteSheet(defaultSheet);
+      }
+    }
+
+    // Create new sheet
+    const sheet = ss.insertSheet(tabName);
+
+    // Set up Row 1: Tab name in A1
+    sheet.getRange(1, 1).setValue(tabName);
+
+    // Set up Row 2: R/W headers starting from Column B
+    sheet.getRange(2, 2).setValue('R');
+    sheet.getRange(2, 3).setValue('W');
+
+    // Add exercises starting from Row 3
+    let currentRow = 3;
+    const exercises = phase2Workouts[tabName];
+
+    exercises.forEach(exercise => {
+      // Write exercise name
+      sheet.getRange(currentRow, 1).setValue(exercise.name);
+      currentRow++;
+
+      // Write SET labels
+      exercise.sets.forEach(setLabel => {
+        sheet.getRange(currentRow, 1).setValue(setLabel);
+        currentRow++;
+      });
+    });
+
+    // Format the sheet
+    sheet.setColumnWidth(1, 250);  // Column A wider for exercise names
+    sheet.setFrozenRows(2);         // Freeze header rows
+    sheet.setFrozenColumns(1);      // Freeze exercise names column
+  });
+
+  Logger.log('✅ Workout sheets created successfully!');
+  Logger.log('📝 Next: Deploy as Web App and copy the URL to PWA settings');
+}
+
 const SHEET_TAB_MAPPING = {
   // Phase 2 (Upper/Lower Split - 4 days/week)
   phase2: {
@@ -329,50 +411,31 @@ function doGet(e) {
 
 ---
 
-## 🚀 Setup Instructions
+## 🚀 Setup Instructions (Automated - 5 Minutes!)
 
-### Step 1: Prepare Your Horizontal Spreadsheet
+### Step 1: Create Blank Google Sheet
+1. Go to [sheets.google.com](https://sheets.google.com)
+2. Click **Blank** to create new spreadsheet
+3. Name it "BWS Workout Tracker" (or your preferred name)
 
-1. **Create tabs** with exact names:
-   - Phase 2: `Upper Body 1 (Phase 2)`, `Lower Body 1 (Phase 2)`, `Upper Body 2 (Phase 2)`, `Lower Body 2 (Phase 2)`
-   - Phase 1: `Workout A (Phase 1)`, `Workout B (Phase 1)`
+### Step 2: Open Apps Script & Paste Code
+1. In your blank Google Sheet, click **Extensions → Apps Script**
+2. Delete the default `function myFunction() {}` code
+3. Copy the entire code block above (lines 63-322) and paste it
+4. Click **Save** (💾 disk icon)
 
-2. **Copy exercises from PWA to each tab:**
-   - Open PWA at https://pranlawate.github.io/gym-tracker/
-   - Click each day tab (MON/TUE/THU/FRI) to see exercise lists
-   - In Google Sheets, copy exercise names to Column A of matching tab
-   - Add SET labels below each exercise (e.g., "SET 1: 8-10", "SET 2: 8-10", etc.)
-   - **Exercise names must match exactly** between PWA and Google Sheets
-
-3. **Set up each tab structure:**
-   - **Row 1**: Leave empty (PWA auto-creates dates when you sync workouts)
-   - **Row 2**: Add "R | W" headers starting from Column B (repeat for each date column)
-   - **Row 3+**: Exercise names + SET labels should now be in Column A
-
-4. **If you have existing workout data:** Add dates to existing columns
-   - For each R/W column pair with data, select 2 cells in Row 1 above it
-   - Right-click → Merge cells → Enter date (YYYY-MM-DD format, e.g., "2025-12-11")
-
-**Example structure:**
-```
-Row 1:  | Upper Body 1 |                | 2025-12-11     | (PWA adds more dates)
-Row 2:  |              | R    | W       | R    | W       | R    | W
-Row 3:  | Incline DB   |      |         |      |         |      |
-Row 4:  | SET 1: 8-10  |      |         | 10   | 22.5    |      |
-Row 5:  | SET 2: 8-10  |      |         | 9    | 22.5    |      |
-```
-
-✅ **PWA auto-creates new date columns** when you sync workouts (no manual date setup needed for new workouts)
-
-### Step 2: Open Apps Script
-1. Open your Google Sheet
-2. Go to **Extensions → Apps Script**
-3. Delete ALL existing code
-
-### Step 3: Paste Updated Code
-1. Copy the entire code block above (all JavaScript code)
-2. Paste it into the Apps Script editor
-3. Click **Save** (disk icon)
+### Step 3: Run Setup Function (ONE TIME ONLY)
+1. In Apps Script editor, find the function dropdown (top toolbar)
+2. Select **setupWorkoutSheet** from the dropdown
+3. Click **Run** (▶️ play button)
+4. **Authorize the script** when prompted:
+   - Click "Review permissions"
+   - Choose your Google account
+   - Click "Advanced" → "Go to BWS Workout Tracker (unsafe)"
+   - Click "Allow"
+5. Wait 5-10 seconds for setup to complete
+6. Check "Execution log" at bottom - should show: `✅ Workout sheets created successfully!`
+7. **Go back to your spreadsheet** - you'll see 4 new tabs with all exercises and rep ranges already filled in!
 
 ### Step 4: Deploy as Web App
 1. Click **Deploy → New deployment**

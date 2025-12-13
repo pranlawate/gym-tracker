@@ -6225,57 +6225,21 @@
             </div>
             <div style="padding: 20px; color: #aaa; line-height: 1.8;">
                 <div id="sheets-setup-step1">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">📝 Step 1: Prepare Horizontal Spreadsheet</h3>
-                    <p style="margin-bottom: 15px; font-size: 14px;">This script works with <strong>horizontal layout</strong> where workouts grow left-to-right over time.</p>
-
-                    <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #667eea;">
-                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">Required Tabs (exact names):</div>
-                        <div style="font-weight: bold; color: #4caf50; margin-top: 12px; margin-bottom: 8px;">Phase 2 (4 tabs):</div>
-                        <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.8;">
-                            <li><code style="background: #0a0a0a; padding: 2px 6px; border-radius: 3px;">Upper Body 1 (Phase 2)</code></li>
-                            <li><code style="background: #0a0a0a; padding: 2px 6px; border-radius: 3px;">Lower Body 1 (Phase 2)</code></li>
-                            <li><code style="background: #0a0a0a; padding: 2px 6px; border-radius: 3px;">Upper Body 2 (Phase 2)</code></li>
-                            <li><code style="background: #0a0a0a; padding: 2px 6px; border-radius: 3px;">Lower Body 2 (Phase 2)</code></li>
-                        </ul>
-                        <div style="font-weight: bold; color: #4caf50; margin: 12px 0 8px 0;">Phase 1 (optional):</div>
-                        <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.8;">
-                            <li><code style="background: #0a0a0a; padding: 2px 6px; border-radius: 3px;">Workout A (Phase 1)</code></li>
-                            <li><code style="background: #0a0a0a; padding: 2px 6px; border-radius: 3px;">Workout B (Phase 1)</code></li>
-                        </ul>
-                    </div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📝 Step 1: Create Blank Google Sheet</h3>
 
                     <div style="background: #1a2e1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #4caf50;">
-                        <div style="font-weight: bold; color: #4caf50; margin-bottom: 8px;">📊 Required Structure (each tab):</div>
-                        <code style="background: #0a0a0a; padding: 8px; border-radius: 4px; display: block; font-size: 9px; overflow-x: auto; white-space: pre; margin-bottom: 10px;">
-Row 1:  | Tab Name | [DATE] | [DATE] | ...
-Row 2:  |          | R | W  | R | W  | ...
-Row 3:  | Exercise |   |    |   |    | ...
-Row 4:  | SET 1    | 10| 25 | 12| 27 | ...
-                        </code>
-                        <p style="margin: 0; font-size: 11px; color: #888;">
-                            ✅ Row 1: Dates in merged cells (format: YYYY-MM-DD, e.g., "2025-12-11")<br>
-                            ✅ Row 2: R | W headers repeat for each date<br>
-                            ✅ Column A: Exercise names + SET labels (e.g., "SET 1: 8-10")
-                        </p>
-                    </div>
-
-                    <div style="background: #1a2e1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #4caf50;">
-                        <div style="color: #4caf50; font-weight: bold; margin-bottom: 8px;">📝 Spreadsheet Setup</div>
-                        <ol style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.8;">
-                            <li><strong>Create tabs</strong> with exact names (see tab list above)</li>
-                            <li><strong>Copy exercises</strong> from PWA workout tabs into Column A
-                                <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 11px; color: #aaa;">
-                                    <li>Click each day tab in PWA (MON/TUE/THU/FRI)</li>
-                                    <li>Copy exercise names to matching Google Sheets tab</li>
-                                    <li>Add SET labels below each (e.g., "SET 1: 8-10")</li>
-                                </ul>
-                            </li>
-                            <li><strong>Row 1:</strong> Leave empty (PWA auto-creates dates)</li>
-                            <li><strong>Row 2:</strong> Add "R | W" headers starting from Column B</li>
+                        <div style="color: #4caf50; font-weight: bold; margin-bottom: 12px;">✨ Automated Setup (No Manual Work!)</div>
+                        <ol style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 2.2;">
+                            <li>Go to <a href="https://sheets.google.com" target="_blank" style="color: #667eea; text-decoration: underline;">sheets.google.com</a></li>
+                            <li>Click <strong>Blank</strong> to create new spreadsheet</li>
+                            <li>Name it "BWS Workout Tracker" (or your preferred name)</li>
                         </ol>
-                        <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaa;">
-                            <strong>💡 Tip:</strong> Exercise names must match exactly between PWA and Google Sheets
-                        </p>
+                        <div style="margin: 15px 0 0 0; padding: 12px; background: rgba(76, 175, 80, 0.1); border-radius: 6px; border-left: 3px solid #4caf50;">
+                            <div style="font-size: 11px; color: #4caf50; font-weight: bold; margin-bottom: 4px;">💡 What happens next:</div>
+                            <div style="font-size: 11px; color: #aaa; line-height: 1.6;">
+                                The setup script will automatically create all 4 workout tabs (Monday Upper, Tuesday Lower, Thursday Upper, Friday Lower) with all exercises and correct rep ranges pre-filled!
+                            </div>
+                        </div>
                     </div>
 
                     <button onclick="showSheetsStep2()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;">
@@ -6284,18 +6248,31 @@ Row 4:  | SET 1    | 10| 25 | 12| 27 | ...
                 </div>
 
                 <div id="sheets-setup-step2" style="display: none;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">⚙️ Step 2: Set Up Apps Script</h3>
-                    <ol style="margin: 0 0 20px 20px; padding: 0;">
-                        <li style="margin-bottom: 10px;">In your Google Sheet, click <strong>Extensions → Apps Script</strong></li>
-                        <li style="margin-bottom: 10px;">Delete any existing code in the editor</li>
-                        <li style="margin-bottom: 10px;">Copy the Apps Script code (see docs/GOOGLE-SHEETS-UPDATED-SCRIPT.md)</li>
-                        <li style="margin-bottom: 10px;">Paste it into the Apps Script editor</li>
-                        <li style="margin-bottom: 10px;">Click the <strong>Save</strong> icon (💾)</li>
-                    </ol>
-                    <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #667eea;">
-                        <div style="color: #667eea; font-weight: bold; margin-bottom: 8px;">💡 Need the Script Code?</div>
-                        <p style="margin: 0; font-size: 13px;">The Apps Script code is in <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px;">docs/Google-Sheets-Setup.md</code> in this repository.</p>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">⚙️ Step 2: Paste Code & Run Setup</h3>
+
+                    <div style="background: #1a2e1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #4caf50;">
+                        <div style="color: #4caf50; font-weight: bold; margin-bottom: 10px;">📋 Paste Apps Script Code</div>
+                        <ol style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 2;">
+                            <li>In your Google Sheet, click <strong>Extensions → Apps Script</strong></li>
+                            <li>Delete the default code (<code style="background: #0a0a0a; padding: 2px 4px;">function myFunction() {}</code>)</li>
+                            <li>Get code from <code style="background: #0a0a0a; padding: 2px 6px;">docs/Google-Sheets-Setup.md</code></li>
+                            <li>Paste entire code and click <strong>Save</strong> (💾)</li>
+                        </ol>
                     </div>
+
+                    <div style="background: #1a2e1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #4caf50;">
+                        <div style="color: #4caf50; font-weight: bold; margin-bottom: 10px;">▶️ Run Setup Function (ONE TIME)</div>
+                        <ol style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 2;">
+                            <li>Find function dropdown in toolbar (says "Select function")</li>
+                            <li>Select <strong>setupWorkoutSheet</strong></li>
+                            <li>Click <strong>Run</strong> (▶️ play button)</li>
+                            <li>Click "Review permissions" → Choose your Google account</li>
+                            <li>Click "Advanced" → "Go to BWS Workout Tracker (unsafe)" → "Allow"</li>
+                            <li>Wait ~10 seconds for execution to complete</li>
+                            <li>Go back to your spreadsheet - you'll see 4 workout tabs created!</li>
+                        </ol>
+                    </div>
+
                     <div style="display: flex; gap: 10px;">
                         <button onclick="showSheetsStep1()" style="flex: 1; padding: 12px; background: #333; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">
                             ← Back
