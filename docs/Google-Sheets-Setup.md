@@ -13,6 +13,7 @@
 ✅ **Maintains your workflow** - Manual tracking and PWA sync use same tabs
 ✅ **Easy phase switching** - Change one variable when transitioning programs
 ✅ **Exercise variant support** - Change exercises in PWA dropdown, syncs to correct position
+✅ **Automatic change tracking** - Cell notes mark when exercise variants change
 
 **What this does:**
 - PWA syncs workout data to your existing horizontal tabs
@@ -320,6 +321,47 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Check if exercise name changed (for exercise variant tracking)
+    const exerciseMatch = data.exercise.match(/^E(\d+):\s*(.+)$/);
+    if (exerciseMatch) {
+      const exercisePosition = parseInt(exerciseMatch[1]);
+      const newExerciseName = exerciseMatch[2].trim();
+
+      // Find the exercise name row (not the SET row)
+      const columnA = sheet.getRange(3, 1, sheet.getLastRow() - 2, 1).getValues();
+      let exerciseCount = 0;
+      let exerciseNameRow = -1;
+
+      for (let i = 0; i < columnA.length; i++) {
+        const cellValue = columnA[i][0];
+        if (!cellValue || cellValue.toString().startsWith('SET ')) continue;
+
+        exerciseCount++;
+        if (exerciseCount === exercisePosition) {
+          exerciseNameRow = i + 3; // +3 for header rows
+          const currentExerciseName = cellValue.toString().replace(/^E\d+:\s*/, '').trim();
+
+          // If exercise name changed, add comment and update name
+          if (currentExerciseName !== newExerciseName) {
+            const dateCell = sheet.getRange(1, dateCol);
+            const existingNote = dateCell.getNote() || '';
+            const changeNote = `${data.date}: E${exercisePosition} changed from "${currentExerciseName}" to "${newExerciseName}"`;
+
+            // Add note to date cell (appends if note exists)
+            if (existingNote) {
+              dateCell.setNote(existingNote + '\n' + changeNote);
+            } else {
+              dateCell.setNote(changeNote);
+            }
+
+            // Update exercise name in Column A
+            sheet.getRange(exerciseNameRow, 1).setValue(`E${exercisePosition}: ${newExerciseName}`);
+          }
+          break;
+        }
+      }
+    }
+
     // Write reps and weight to R/W columns
     const repsCol = dateCol;       // R column
     const weightCol = dateCol + 1; // W column
@@ -599,6 +641,39 @@ Result:
 - Column A name doesn't matter - position matching ensures correct sync
 
 **Optional:** You can manually update Column A exercise names in Google Sheet to match your chosen variants, but it's not required for syncing.
+
+### Exercise Change Tracking:
+
+When you change an exercise variant in the PWA, the script automatically:
+
+1. **Detects the change** - Compares PWA exercise name to Google Sheet Column A
+2. **Adds a cell note** - Hover over the date cell to see: "2025-12-16: E2 changed from 'Chest-Supported Row' to 'Single Arm Row'"
+3. **Updates Column A** - Changes exercise name to match new variant
+4. **Preserves history** - Previous date columns still show old exercise data with clear change marker
+
+**Example:**
+```
+Row 1:  | Upper Body 1 | 2025-12-11 ☑️ | 2025-12-16 📝 | 2025-12-18 |
+                        No note          Note: E2 changed   No note
+Row 2:  |              | R    | W       | R    | W       | R    | W |
+Row 3:  | E2: Single   |      |         |      |         |      |     |
+        | Arm Row      |      |         |      |         |      |     |
+Row 4:  | SET 1: 8-10  | 10   | 30      | 10   | 32.5    | 10   | 32.5 |
+                        ↑                 ↑                 ↑
+                    Old exercise      Changed here      New exercise
+                 (Chest Row data)   (First Single Arm) (Single Arm)
+```
+
+**Why This Matters:**
+- Historical data from 2025-12-11 is for "Chest-Supported Row"
+- On 2025-12-16, you switched to "Single Arm Row"
+- Cell note on 2025-12-16 marks when the change happened
+- Future workouts (2025-12-18+) use "Single Arm Row" data for progression
+
+**How to See Change Notes:**
+- In Google Sheets, hover over date cell in Row 1
+- Small note indicator appears in corner of cell
+- Note shows: "Date: E# changed from 'Old Exercise' to 'New Exercise'"
 
 ---
 
