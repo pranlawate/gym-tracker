@@ -76,9 +76,9 @@ Progressive Web App (PWA) for tracking Built With Science (BWS) Beginner Program
 ```
 /
 ├── index.html                    # Main PWA (Phase 1 & 2 workouts)
-├── BWS.md                        # Workout program reference guide
-├── tracker.md                    # Complete course documentation
-├── WORKOUT-TRACKING-README.md    # Workout session logging protocol
+├── bws-workout-plan.md           # Workout program reference guide
+├── bws-course-notes.md           # Complete course documentation
+├── workout-log-protocol.md       # Workout session logging protocol
 ├── docs/
 │   ├── Exercise-Alternatives-Reference.md  # YouTube videos & written alternatives
 │   ├── PROGRESSION-TRACKING-GUIDE.md       # Progression strategies for beginners
@@ -94,7 +94,7 @@ Progressive Web App (PWA) for tracking Built With Science (BWS) Beginner Program
 ## Documentation
 
 ### For Users
-- **[BWS.md](BWS.md)** - Main workout program (Phase 2 focus, beginner-friendly)
+- **[bws-workout-plan.md](bws-workout-plan.md)** - Main workout program (Phase 2 focus, beginner-friendly)
 - **[PROGRESSION-TRACKING-GUIDE.md](docs/PROGRESSION-TRACKING-GUIDE.md)** - How to progress when stuck (2.5kg→5kg gap, tempo progression, microloading)
 - **[Exercise-Alternatives-Reference.md](docs/Exercise-Alternatives-Reference.md)** - Home workout alternatives with video links
 - **[VIDEO-LIBRARY.md](docs/VIDEO-LIBRARY.md)** - Complete video catalog by muscle group
