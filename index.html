@@ -6246,16 +6246,16 @@
 
                     <div style="background: #1a2e1a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #4caf50;">
                         <div style="font-weight: bold; color: #4caf50; margin-bottom: 8px;">📊 Required Structure (each tab):</div>
-                        <code style="background: #0a0a0a; padding: 8px; border-radius: 4px; display: block; font-size: 10px; overflow-x: auto; margin-bottom: 10px;">
-Row 1:  | Upper Body 1 | 2025-12-11     | 2025-12-13     | (PWA adds more)
-Row 2:  |              | R    | W       | R    | W       | ...
-Row 3:  | Exercise 1   |      |         |      |         | ...
-Row 4:  | SET 1: 8-10  | 10   | 22.5    | 10   | 25      | ...
+                        <code style="background: #0a0a0a; padding: 8px; border-radius: 4px; display: block; font-size: 9px; overflow-x: auto; white-space: pre; margin-bottom: 10px;">
+Row 1:  | Tab Name | [DATE] | [DATE] | ...
+Row 2:  |          | R | W  | R | W  | ...
+Row 3:  | Exercise |   |    |   |    | ...
+Row 4:  | SET 1    | 10| 25 | 12| 27 | ...
                         </code>
                         <p style="margin: 0; font-size: 11px; color: #888;">
-                            ✅ Row 1: Dates in merged cells (YYYY-MM-DD)<br>
-                            ✅ Row 2: R | W headers<br>
-                            ✅ Column A: Exercise names + SET labels
+                            ✅ Row 1: Dates in merged cells (format: YYYY-MM-DD, e.g., "2025-12-11")<br>
+                            ✅ Row 2: R | W headers repeat for each date<br>
+                            ✅ Column A: Exercise names + SET labels (e.g., "SET 1: 8-10")
                         </p>
                     </div>
 
