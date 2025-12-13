@@ -12,11 +12,13 @@
 ✅ **Supports 3-4 sets per exercise** - Handles variable set counts
 ✅ **Maintains your workflow** - Manual tracking and PWA sync use same tabs
 ✅ **Easy phase switching** - Change one variable when transitioning programs
+✅ **Exercise variant support** - Change exercises in PWA dropdown, syncs to correct position
 
 **What this does:**
 - PWA syncs workout data to your existing horizontal tabs
 - Loads previous workouts for progressive overload suggestions
 - All-in-one tracking: Your structure + PWA automation
+- **Supports dynamic exercise changes** - Switch from "Chest-Supported Row" to "Single Arm Row" in PWA, data syncs to E2 position in sheet
 
 **Requirements:**
 - **Row 1** must contain workout dates in merged cells above R/W pairs (format: YYYY-MM-DD)
@@ -74,9 +76,9 @@ function setupWorkoutSheet() {
   const phase2Workouts = {
     'Upper Body 1 (Phase 2)': [
       { name: 'Incline Dumbbell Press', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
-      { name: 'Pull-Ups', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8', 'SET 4: 6-8'] },
+      { name: 'Chest-Supported Row', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
       { name: 'Lean-Away Cable Lateral Raises', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
-      { name: 'Dumbbell Pullovers', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
+      { name: 'Pull-Ups', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8', 'SET 4: 6-8'] },
       { name: 'Incline Overhead Dumbbell Extensions', sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'] }
     ],
     'Lower Body 1 (Phase 2)': [
@@ -196,8 +198,48 @@ function findDateColumn(sheet, targetDate) {
 }
 
 function findExerciseRow(sheet, exerciseName, setNumber) {
-  // Scan column A for exercise name, then find the set row
-  // Handles variable set counts (3-4 sets per exercise)
+  // Extract exercise position (E1, E2, E3, etc.) from exercise name
+  // This allows exercise variants to sync correctly
+  // Example: "E2: Single Arm Row" → position 2
+  const exerciseMatch = exerciseName.match(/^E(\d+):/);
+
+  if (!exerciseMatch) {
+    // Fallback: try exact name matching if no E# prefix found
+    return findExerciseRowByName(sheet, exerciseName, setNumber);
+  }
+
+  const exercisePosition = parseInt(exerciseMatch[1]);
+
+  // Scan column A to find the Nth exercise (counting only exercise names, not SET labels)
+  const columnA = sheet.getRange(3, 1, sheet.getLastRow() - 2, 1).getValues();
+  let exerciseCount = 0;
+
+  for (let i = 0; i < columnA.length; i++) {
+    const cellValue = columnA[i][0];
+    if (!cellValue) continue;
+
+    // Skip SET labels - only count actual exercise names
+    if (!cellValue.toString().startsWith('SET ')) {
+      exerciseCount++;
+
+      // Found the exercise at the correct position!
+      if (exerciseCount === exercisePosition) {
+        // SET rows follow immediately after: "SET 1: X-Y", "SET 2: X-Y", etc.
+        const setRow = i + 3 + setNumber; // +3 for Row 1,2 headers + 0-indexed i, +setNumber for set offset
+
+        // Verify this is actually a SET row
+        if (setRow <= sheet.getLastRow()) {
+          return setRow;
+        }
+      }
+    }
+  }
+
+  return -1; // Exercise position not found
+}
+
+// Fallback function for exact name matching (backwards compatibility)
+function findExerciseRowByName(sheet, exerciseName, setNumber) {
   const columnA = sheet.getRange(3, 1, sheet.getLastRow() - 2, 1).getValues();
 
   for (let i = 0; i < columnA.length; i++) {
@@ -208,18 +250,14 @@ function findExerciseRow(sheet, exerciseName, setNumber) {
     if (cellValue.toString() === exerciseName ||
         cellValue.toString().replace(/^E\d+:\s*/, '') === exerciseName.replace(/^E\d+:\s*/, '')) {
 
-      // Found exercise name! Now find the set row
-      // SET rows follow immediately after: "SET 1: X-Y", "SET 2: X-Y", etc.
-      const setRow = i + 3 + setNumber; // +3 for Row 1,2 headers + 0-indexed i, +setNumber for set offset
-
-      // Verify this is actually a SET row
+      const setRow = i + 3 + setNumber;
       if (setRow <= sheet.getLastRow()) {
         return setRow;
       }
     }
   }
 
-  return -1; // Exercise not found
+  return -1;
 }
 
 function createNewDateColumn(sheet, date) {
@@ -518,6 +556,49 @@ PWA receives:
 
 PWA shows: "22.5 kg (last time)" OR "25 kg (recommended +2.5)" if you hit top reps
 ```
+
+### When You Change Exercise Variant in PWA:
+```
+Example: Switching from "Chest-Supported Row" to "Single Arm Row"
+
+PWA:
+1. User clicks dropdown on E2, selects "Single Arm Row"
+2. Completes workout with new exercise
+3. Clicks "📤 Sync to Sheets"
+
+PWA sends:
+{
+  exercise: "E2: Single Arm Row",  ← Changed from default
+  set: 1,
+  weight: 30,
+  reps: 10
+}
+
+Apps Script:
+1. Extracts position from "E2: Single Arm Row" → Position 2
+2. Scans Column A for 2nd exercise (ignores exercise name)
+3. Finds 2nd exercise = "Chest-Supported Row" (or whatever is in sheet)
+4. Writes data to SET 1 row under that 2nd exercise position
+
+Result:
+✅ Data syncs to correct position regardless of exercise name
+✅ You can change exercises in PWA without updating Google Sheet
+✅ Column A exercise names can stay as default OR you can manually update them
+```
+
+**How This Works:**
+- PWA exercise names follow format: "E1: Exercise Name", "E2: Exercise Name", etc.
+- Apps Script extracts the position number (E1=1, E2=2, E3=3, etc.)
+- Matches by position, not by name
+- **You can change exercise variants freely in PWA** - data always syncs to correct row
+
+**Example:**
+- Sheet has "Chest-Supported Row" in E2 position
+- You switch PWA to "Single Arm Row" variant
+- Workout data writes to E2 position in sheet (under "Chest-Supported Row" row)
+- Column A name doesn't matter - position matching ensures correct sync
+
+**Optional:** You can manually update Column A exercise names in Google Sheet to match your chosen variants, but it's not required for syncing.
 
 ---
 
