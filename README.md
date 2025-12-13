@@ -100,7 +100,7 @@ Progressive Web App (PWA) for tracking Built With Science (BWS) Beginner Program
 - **[VIDEO-LIBRARY.md](docs/VIDEO-LIBRARY.md)** - Complete video catalog by muscle group
 
 ### For Course Content
-- **[tracker.md](tracker.md)** - Complete BWS course notes (nutrition, training, progression, strength goals)
+- **[bws-course-notes.md](bws-course-notes.md)** - Complete BWS course notes (nutrition, training, progression, strength goals)
 
 ---
 
