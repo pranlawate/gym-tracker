@@ -337,12 +337,19 @@ function doGet(e) {
    - Phase 2: `Upper Body 1 (Phase 2)`, `Lower Body 1 (Phase 2)`, `Upper Body 2 (Phase 2)`, `Lower Body 2 (Phase 2)`
    - Phase 1: `Workout A (Phase 1)`, `Workout B (Phase 1)`
 
-2. **Set up each tab structure:**
+2. **Copy exercises from PWA to each tab:**
+   - Open PWA at https://pranlawate.github.io/gym-tracker/
+   - Click each day tab (MON/TUE/THU/FRI) to see exercise lists
+   - In Google Sheets, copy exercise names to Column A of matching tab
+   - Add SET labels below each exercise (e.g., "SET 1: 8-10", "SET 2: 8-10", etc.)
+   - **Exercise names must match exactly** between PWA and Google Sheets
+
+3. **Set up each tab structure:**
    - **Row 1**: Leave empty (PWA auto-creates dates when you sync workouts)
    - **Row 2**: Add "R | W" headers starting from Column B (repeat for each date column)
-   - **Row 3+**: Add exercise names in Column A, followed by SET labels (e.g., "SET 1: 8-10")
+   - **Row 3+**: Exercise names + SET labels should now be in Column A
 
-3. **If you have existing workout data:** Add dates to existing columns
+4. **If you have existing workout data:** Add dates to existing columns
    - For each R/W column pair with data, select 2 cells in Row 1 above it
    - Right-click → Merge cells → Enter date (YYYY-MM-DD format, e.g., "2025-12-11")
 
