@@ -66,9 +66,10 @@ Replace the code in your Google Apps Script with this updated version:
 
 ```javascript
 // ===== CHANGELOG =====
-// 2025-12-14: Fixed critical bug where createNewDateColumn used getLastColumn()
-//             instead of scanning Row 1 for empty columns (caused data to skip to columns 5/6)
-//             Now scans Row 1 from column B to find first empty date column
+// 2025-12-14: Fixed critical column selection bug - rewrote createNewDateColumn
+//             to directly check columns 2,4,6,8... (R columns) in Row 1 for empty slots
+//             Previous version had array indexing bug causing it to skip to columns 7/8
+//             Now correctly fills columns B/C (2/3) first, then D/E (4/5), etc.
 //             Added dropdown validation for exercise alternatives in Column A
 //             Enhanced exercise change tracking with visual markers (⚠️ + yellow highlight)
 //             Updated setupWorkoutSheet to use E# prefix for exercise names
@@ -364,41 +365,36 @@ function createNewDateColumn(sheet, date) {
   // Create new R/W column pair for a new workout date
   // IMPORTANT: Always scan Row 1 to find the first empty column, not last column with any data
 
-  let newColR, newColW;
+  // Start checking from column B (column 2)
+  // R/W pairs are always in columns B/C, D/E, F/G, H/I, etc.
+  // So R columns are at: 2, 4, 6, 8, 10... (even numbers)
 
-  // Scan Row 1 starting from column B to find first empty column pair
-  // This ensures we fill in gaps left by deleted/cleared dates
-  const maxColToCheck = Math.max(sheet.getLastColumn(), 10); // Check at least up to column 10
-  const row1Values = sheet.getRange(1, 2, 1, maxColToCheck - 1).getValues()[0]; // Read from column B onward
-  const row2Values = sheet.getRange(2, 2, 1, maxColToCheck - 1).getValues()[0]; // Read R/W headers
+  let newColR = -1;
+  let newColW = -1;
 
-  let foundEmptyPair = false;
+  // Check up to 20 column pairs (40 columns total) - should be more than enough
+  for (let col = 2; col <= 40; col += 2) {
+    // col is the R column, col+1 is the W column
+    const dateValue = sheet.getRange(1, col).getValue();
 
-  for (let i = 0; i < row1Values.length; i += 2) {
-    const colIndex = i + 2; // +2 because we started from column B (index 2)
-    const row1Value = row1Values[i];
-    const row2R = row2Values[i];
-    const row2W = row2Values[i + 1];
-
-    // Check if this is an empty pair with R/W headers or completely empty
-    if (!row1Value || row1Value === '') {
-      // Found an empty column in Row 1
-      // Check if Row 2 has R/W headers, if not we need to add them
-      newColR = colIndex;
-      newColW = colIndex + 1;
-      foundEmptyPair = true;
+    // If Row 1 at this R column is empty, we found our spot
+    if (!dateValue || dateValue === '') {
+      newColR = col;
+      newColW = col + 1;
       break;
     }
   }
 
-  // If no empty pair found, add new columns at the end
-  if (!foundEmptyPair) {
+  // If we didn't find an empty pair in first 20 pairs, add at the end
+  if (newColR === -1) {
     const lastCol = sheet.getLastColumn();
-    // Make sure we're adding after an even column (to maintain R/W pairs)
-    if ((lastCol - 1) % 2 === 0) {
-      newColR = lastCol + 1;
+    // Find next even column number after lastCol
+    if (lastCol < 2) {
+      newColR = 2; // First R/W pair
+    } else if ((lastCol - 1) % 2 === 0) {
+      newColR = lastCol + 1; // lastCol is odd, so lastCol+1 is even (R column)
     } else {
-      newColR = lastCol + 2;
+      newColR = lastCol + 2; // lastCol is even, so lastCol+2 is next even (R column)
     }
     newColW = newColR + 1;
   }
@@ -406,7 +402,7 @@ function createNewDateColumn(sheet, date) {
   // Merge cells in Row 1 and add date
   sheet.getRange(1, newColR, 1, 2).merge().setValue(date);
 
-  // Add R/W headers in Row 2 (overwrites placeholders or creates new)
+  // Add R/W headers in Row 2
   sheet.getRange(2, newColR).setValue('R');
   sheet.getRange(2, newColW).setValue('W');
 
