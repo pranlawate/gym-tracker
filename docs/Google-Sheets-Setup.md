@@ -13,7 +13,8 @@
 ✅ **Maintains your workflow** - Manual tracking and PWA sync use same tabs
 ✅ **Easy phase switching** - Change one variable when transitioning programs
 ✅ **Exercise variant support** - Change exercises in PWA dropdown, syncs to correct position
-✅ **Automatic change tracking** - Cell notes mark when exercise variants change
+✅ **Exercise dropdowns in Sheets** - Click any exercise in Column A to see dropdown menu with all alternatives
+✅ **Visual change tracking** - Yellow highlight + ⚠️ icon + cell notes mark when exercise variants change
 
 **What this does:**
 - PWA syncs workout data to your existing horizontal tabs
@@ -64,6 +65,14 @@ Row 6:  | SET 3: 8-10  | 8    | 22.5    | 9    | 25      | ...  | ...     |
 Replace the code in your Google Apps Script with this updated version:
 
 ```javascript
+// ===== CHANGELOG =====
+// 2025-12-14: Fixed critical bug where createNewDateColumn used getLastColumn()
+//             instead of scanning Row 1 for empty columns (caused data to skip to columns 5/6)
+//             Now scans Row 1 from column B to find first empty date column
+//             Added dropdown validation for exercise alternatives in Column A
+//             Enhanced exercise change tracking with visual markers (⚠️ + yellow highlight)
+//             Updated setupWorkoutSheet to use E# prefix for exercise names
+//
 // ===== CONFIGURATION =====
 // Set your current phase here: 'phase1' or 'phase2'
 const CURRENT_PHASE = 'phase2';  // Change to 'phase1' when doing Phase 1
@@ -74,33 +83,111 @@ function setupWorkoutSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Phase 2 workout structure with exact rep ranges from PWA
+  // Exercise names include E# prefix to match PWA format
+  // Each exercise includes alternatives for dropdown validation
   const phase2Workouts = {
     'Upper Body 1 (Phase 2)': [
-      { name: 'Incline Dumbbell Press', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
-      { name: 'Chest-Supported Row', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
-      { name: 'Lean-Away Cable Lateral Raises', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
-      { name: 'Pull-Ups', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8', 'SET 4: 6-8'] },
-      { name: 'Incline Overhead Dumbbell Extensions', sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'] }
+      {
+        name: 'E1: Incline Dumbbell Press',
+        sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'],
+        alternatives: ['E1: Incline Dumbbell Press', 'E1: Flat Dumbbell Press', 'E1: Incline Barbell Press', 'E1: Machine Chest Press']
+      },
+      {
+        name: 'E2: Chest-Supported Row',
+        sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'],
+        alternatives: ['E2: Chest-Supported Row', 'E2: Single Arm Dumbbell Row', 'E2: T-Bar Row', 'E2: Machine Row']
+      },
+      {
+        name: 'E3: Lean-Away Cable Lateral Raises',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E3: Lean-Away Cable Lateral Raises', 'E3: Dumbbell Lateral Raises', 'E3: Machine Lateral Raises']
+      },
+      {
+        name: 'E4: Pull-Ups',
+        sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8', 'SET 4: 6-8'],
+        alternatives: ['E4: Pull-Ups', 'E4: Assisted Pull-Ups', 'E4: Lat Pulldown', 'E4: Hanging Knee Raises with Pull-Ups']
+      },
+      {
+        name: 'E5: Incline Overhead Dumbbell Extensions',
+        sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'],
+        alternatives: ['E5: Incline Overhead Dumbbell Extensions', 'E5: Cable Rope Pushdowns', 'E5: Cable Bar Pushdowns', 'E5: Standing Overhead DB Extension']
+      }
     ],
     'Lower Body 1 (Phase 2)': [
-      { name: 'Back Squat', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'] },
-      { name: 'Bulgarian Split Squat', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
-      { name: 'Swiss Ball Leg Curls', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
-      { name: 'Single Leg Weighted Calf Raise', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] }
+      {
+        name: 'E1: Back Squat',
+        sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'],
+        alternatives: ['E1: Back Squat', 'E1: Front Squat', 'E1: Goblet Squat', 'E1: Leg Press']
+      },
+      {
+        name: 'E2: Bulgarian Split Squat',
+        sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'],
+        alternatives: ['E2: Bulgarian Split Squat', 'E2: Walking Lunges', 'E2: Reverse Lunges', 'E2: Step-Ups']
+      },
+      {
+        name: 'E3: Swiss Ball Leg Curls',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E3: Swiss Ball Leg Curls', 'E3: Lying Leg Curls', 'E3: Seated Leg Curls', 'E3: Nordic Curls']
+      },
+      {
+        name: 'E4: Single Leg Weighted Calf Raise',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E4: Single Leg Weighted Calf Raise', 'E4: Standing Calf Raise (Machine)', 'E4: Seated Weighted Calf Raise']
+      }
     ],
     'Upper Body 2 (Phase 2)': [
-      { name: 'Barbell Bench Press', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'] },
-      { name: 'Seated Cable Row', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
-      { name: 'Standing Overhead Press', sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'] },
-      { name: 'Face Pulls', sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'] },
-      { name: 'Dip Push-Ups', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
-      { name: 'Incline Dumbbell Curls', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] }
+      {
+        name: 'E1: Barbell Bench Press',
+        sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'],
+        alternatives: ['E1: Barbell Bench Press', 'E1: Dumbbell Bench Press', 'E1: Machine Chest Press', 'E1: Incline Barbell Press']
+      },
+      {
+        name: 'E2: Seated Cable Row',
+        sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'],
+        alternatives: ['E2: Seated Cable Row', 'E2: Machine Row', 'E2: Chest-Supported Row', 'E2: Barbell Row']
+      },
+      {
+        name: 'E3: Standing Overhead Press',
+        sets: ['SET 1: 8-10', 'SET 2: 8-10', 'SET 3: 8-10'],
+        alternatives: ['E3: Standing Overhead Press', 'E3: Seated Dumbbell Press', 'E3: Machine Shoulder Press', 'E3: Arnold Press']
+      },
+      {
+        name: 'E4: Face Pulls',
+        sets: ['SET 1: 12-15', 'SET 2: 12-15', 'SET 3: 12-15'],
+        alternatives: ['E4: Face Pulls', 'E4: Kneeling Face Pulls', 'E4: Reverse Pec Deck', 'E4: Band Pull-Aparts']
+      },
+      {
+        name: 'E5: Dip Push-Ups',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E5: Dip Push-Ups', 'E5: Weighted Dips', 'E5: Chest Dips', 'E5: Diamond Push-Ups']
+      },
+      {
+        name: 'E6: Incline Dumbbell Curls',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E6: Incline Dumbbell Curls', 'E6: Cable Curls', 'E6: Barbell Curls', 'E6: Hammer Curls']
+      }
     ],
     'Lower Body 2 (Phase 2)': [
-      { name: 'Deadlift', sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'] },
-      { name: 'Leg Press', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
-      { name: 'Reverse Lunges', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] },
-      { name: 'Seated Weighted Calf Raise', sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'] }
+      {
+        name: 'E1: Deadlift',
+        sets: ['SET 1: 6-8', 'SET 2: 6-8', 'SET 3: 6-8'],
+        alternatives: ['E1: Deadlift', 'E1: Romanian Deadlift', 'E1: Trap Bar Deadlift', 'E1: Sumo Deadlift']
+      },
+      {
+        name: 'E2: Leg Press',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E2: Leg Press', 'E2: Hack Squat', 'E2: Front Squat', 'E2: Goblet Squat']
+      },
+      {
+        name: 'E3: Reverse Lunges',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E3: Reverse Lunges', 'E3: Walking Lunges', 'E3: Bulgarian Split Squat', 'E3: Step-Ups']
+      },
+      {
+        name: 'E4: Seated Weighted Calf Raise',
+        sets: ['SET 1: 10-12', 'SET 2: 10-12', 'SET 3: 10-12'],
+        alternatives: ['E4: Seated Weighted Calf Raise', 'E4: Standing Calf Raise (Machine)', 'E4: Single Leg Weighted Calf Raise']
+      }
     ]
   };
 
@@ -122,7 +209,19 @@ function setupWorkoutSheet() {
 
     exercises.forEach(exercise => {
       // Write exercise name
-      sheet.getRange(currentRow, 1).setValue(exercise.name);
+      const exerciseCell = sheet.getRange(currentRow, 1);
+      exerciseCell.setValue(exercise.name);
+
+      // Add dropdown validation with alternatives
+      if (exercise.alternatives && exercise.alternatives.length > 0) {
+        const rule = SpreadsheetApp.newDataValidation()
+          .requireValueInList(exercise.alternatives, true)
+          .setAllowInvalid(false)
+          .setHelpText('Select an exercise variant from the dropdown')
+          .build();
+        exerciseCell.setDataValidation(rule);
+      }
+
       currentRow++;
 
       // Write SET labels
@@ -262,15 +361,52 @@ function findExerciseRowByName(sheet, exerciseName, setNumber) {
 }
 
 function createNewDateColumn(sheet, date) {
-  // Create new R/W column pair at the end for a new workout date
-  const lastCol = sheet.getLastColumn();
-  const newColR = lastCol + 1;
-  const newColW = lastCol + 2;
+  // Create new R/W column pair for a new workout date
+  // IMPORTANT: Always scan Row 1 to find the first empty column, not last column with any data
+
+  let newColR, newColW;
+
+  // Scan Row 1 starting from column B to find first empty column pair
+  // This ensures we fill in gaps left by deleted/cleared dates
+  const maxColToCheck = Math.max(sheet.getLastColumn(), 10); // Check at least up to column 10
+  const row1Values = sheet.getRange(1, 2, 1, maxColToCheck - 1).getValues()[0]; // Read from column B onward
+  const row2Values = sheet.getRange(2, 2, 1, maxColToCheck - 1).getValues()[0]; // Read R/W headers
+
+  let foundEmptyPair = false;
+
+  for (let i = 0; i < row1Values.length; i += 2) {
+    const colIndex = i + 2; // +2 because we started from column B (index 2)
+    const row1Value = row1Values[i];
+    const row2R = row2Values[i];
+    const row2W = row2Values[i + 1];
+
+    // Check if this is an empty pair with R/W headers or completely empty
+    if (!row1Value || row1Value === '') {
+      // Found an empty column in Row 1
+      // Check if Row 2 has R/W headers, if not we need to add them
+      newColR = colIndex;
+      newColW = colIndex + 1;
+      foundEmptyPair = true;
+      break;
+    }
+  }
+
+  // If no empty pair found, add new columns at the end
+  if (!foundEmptyPair) {
+    const lastCol = sheet.getLastColumn();
+    // Make sure we're adding after an even column (to maintain R/W pairs)
+    if ((lastCol - 1) % 2 === 0) {
+      newColR = lastCol + 1;
+    } else {
+      newColR = lastCol + 2;
+    }
+    newColW = newColR + 1;
+  }
 
   // Merge cells in Row 1 and add date
   sheet.getRange(1, newColR, 1, 2).merge().setValue(date);
 
-  // Add R/W headers in Row 2
+  // Add R/W headers in Row 2 (overwrites placeholders or creates new)
   sheet.getRange(2, newColR).setValue('R');
   sheet.getRange(2, newColW).setValue('W');
 
@@ -341,7 +477,7 @@ function doPost(e) {
           exerciseNameRow = i + 3; // +3 for header rows
           const currentExerciseName = cellValue.toString().replace(/^E\d+:\s*/, '').trim();
 
-          // If exercise name changed, add comment and update name
+          // If exercise name changed, add comment, visual marker, and update name
           if (currentExerciseName !== newExerciseName) {
             const dateCell = sheet.getRange(1, dateCol);
             const existingNote = dateCell.getNote() || '';
@@ -352,6 +488,15 @@ function doPost(e) {
               dateCell.setNote(existingNote + '\n' + changeNote);
             } else {
               dateCell.setNote(changeNote);
+            }
+
+            // Highlight date cell with light yellow background to indicate exercise change
+            dateCell.setBackground('#fff9c4');
+
+            // Add a small indicator to the date cell text
+            const currentDateText = dateCell.getValue();
+            if (currentDateText && !currentDateText.toString().includes('⚠️')) {
+              dateCell.setValue(currentDateText + ' ⚠️');
             }
 
             // Update exercise name in Column A
@@ -649,23 +794,30 @@ Result:
 
 **Optional:** You can manually update Column A exercise names in Google Sheet to match your chosen variants, but it's not required for syncing.
 
-### Exercise Change Tracking:
+### Exercise Change Tracking with Visual Markers:
 
-When you change an exercise variant in the PWA, the script automatically:
+**Two Ways to Change Exercises:**
+
+1. **In PWA** - Select different variant from dropdown in PWA interface
+2. **In Google Sheets** - Click exercise name cell in Column A and select from dropdown menu
+
+When you change an exercise variant (via PWA or Google Sheets), the script automatically:
 
 1. **Detects the change** - Compares PWA exercise name to Google Sheet Column A
-2. **Adds a cell note** - Hover over the date cell to see: "2025-12-16: E2 changed from 'Chest-Supported Row' to 'Single Arm Row'"
-3. **Updates Column A** - Changes exercise name to match new variant
-4. **Preserves history** - Previous date columns still show old exercise data with clear change marker
+2. **Adds visual marker** - Date cell gets yellow background (#fff9c4) and ⚠️ warning icon
+3. **Adds cell note** - Hover over the date cell to see: "2025-12-16: E2 changed from 'Chest-Supported Row' to 'Single Arm Row'"
+4. **Updates Column A** - Changes exercise name to match new variant
+5. **Preserves history** - Previous date columns still show old exercise data with clear change marker
 
 **Example:**
 ```
-Row 1:  | Upper Body 1 | 2025-12-11 ☑️ | 2025-12-16 📝 | 2025-12-18 |
-                        No note          Note: E2 changed   No note
-Row 2:  |              | R    | W       | R    | W       | R    | W |
-Row 3:  | E2: Single   |      |         |      |         |      |     |
-        | Arm Row      |      |         |      |         |      |     |
-Row 4:  | SET 1: 8-10  | 10   | 30      | 10   | 32.5    | 10   | 32.5 |
+Row 1:  | Upper Body 1 | 2025-12-11      | 2025-12-16 ⚠️    | 2025-12-18 |
+                        No marker        Yellow highlight   No marker
+                                         + Note
+Row 2:  |              | R    | W       | R    | W        | R    | W |
+Row 3:  | E2: Single   |      |         |      |          |      |     |
+        | Arm Row ▼    |      |         |      |          |      |     | ← Dropdown menu
+Row 4:  | SET 1: 8-10  | 10   | 30      | 10   | 32.5     | 10   | 32.5 |
                         ↑                 ↑                 ↑
                     Old exercise      Changed here      New exercise
                  (Chest Row data)   (First Single Arm) (Single Arm)
@@ -674,6 +826,7 @@ Row 4:  | SET 1: 8-10  | 10   | 30      | 10   | 32.5    | 10   | 32.5 |
 **Why This Matters:**
 - Historical data from 2025-12-11 is for "Chest-Supported Row"
 - On 2025-12-16, you switched to "Single Arm Row"
+- Yellow highlight + ⚠️ icon make it immediately visible when exercise changed
 - Cell note on 2025-12-16 marks when the change happened
 - Future workouts (2025-12-18+) use "Single Arm Row" data for progression
 
@@ -681,6 +834,12 @@ Row 4:  | SET 1: 8-10  | 10   | 30      | 10   | 32.5    | 10   | 32.5 |
 - In Google Sheets, hover over date cell in Row 1
 - Small note indicator appears in corner of cell
 - Note shows: "Date: E# changed from 'Old Exercise' to 'New Exercise'"
+
+**Using Dropdowns in Google Sheets:**
+- Each exercise name cell in Column A has a dropdown menu (▼)
+- Click the cell to see all available alternatives for that exercise
+- Select any alternative from the list - change will be tracked automatically
+- This makes it easy to switch exercises manually in Google Sheets without using PWA
 
 ---
 
@@ -693,6 +852,9 @@ Row 4:  | SET 1: 8-10  | 10   | 30      | 10   | 32.5    | 10   | 32.5 |
 ✅ **Backward compatible** - Works with existing workout data
 ✅ **Progressive overload** - PWA suggests +2.5kg when you hit top reps
 ✅ **Flexible date formats** - Supports YYYY-MM-DD, MM/DD/YYYY, or Google Sheets dates
+✅ **Exercise dropdowns** - Each exercise has dropdown menu with all alternatives
+✅ **Visual change tracking** - Yellow highlight + ⚠️ icon when exercise variant changes
+✅ **Detailed change history** - Cell notes track what changed and when
 
 ---
 
