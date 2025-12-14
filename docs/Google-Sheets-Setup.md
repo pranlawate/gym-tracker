@@ -75,6 +75,8 @@ Replace the code in your Google Apps Script with this updated version:
 //             Added dropdown validation for exercise alternatives in Column A
 //             Enhanced exercise change tracking with visual markers (⚠️ + yellow highlight)
 //             Updated setupWorkoutSheet to use E# prefix for exercise names
+//             DEBUGGING VERSION: Added comprehensive logging to doPost, findDateColumn,
+//             and createNewDateColumn to diagnose column selection issue
 //
 // ===== CONFIGURATION =====
 // Set your current phase here: 'phase1' or 'phase2'
@@ -278,7 +280,13 @@ const SHEET_TAB_MAPPING = {
 function findDateColumn(sheet, targetDate) {
   // Scan Row 1 for merged cells containing the target date
   // Supports multiple date formats: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY
-  const row1 = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  Logger.log(`findDateColumn: Looking for date ${targetDate}`);
+
+  const lastCol = sheet.getLastColumn();
+  Logger.log(`findDateColumn: Sheet has ${lastCol} columns with data`);
+
+  const row1 = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  Logger.log(`findDateColumn: Row 1 values: ${JSON.stringify(row1)}`);
 
   for (let col = 0; col < row1.length; col++) {
     const cellValue = row1[col];
@@ -292,11 +300,15 @@ function findDateColumn(sheet, targetDate) {
       normalizedCellDate = cellValue.toString();
     }
 
+    Logger.log(`findDateColumn: Column ${col + 1} has value "${cellValue}", normalized to "${normalizedCellDate}"`);
+
     if (normalizedCellDate === targetDate) {
+      Logger.log(`findDateColumn: MATCH found at column ${col + 1}`);
       return col + 1; // Return 1-based column index
     }
   }
 
+  Logger.log('findDateColumn: No match found, returning -1');
   return -1; // Date column not found
 }
 
@@ -437,11 +449,16 @@ function doPost(e) {
     // data = { date: "2025-12-11", day: "Monday", exercise: "Incline Dumbbell Press",
     //          set: 1, weight: 22.5, reps: 10, notes: "" }
 
+    Logger.log('=== doPost START ===');
+    Logger.log(`Received data: ${JSON.stringify(data)}`);
+
     // Get the correct tab
     const tabName = SHEET_TAB_MAPPING[CURRENT_PHASE][data.day] || SHEET_TAB_MAPPING[CURRENT_PHASE]['Monday'];
+    Logger.log(`Tab name: ${tabName}`);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName);
 
     if (!sheet) {
+      Logger.log(`ERROR: Tab "${tabName}" not found`);
       return ContentService.createTextOutput(JSON.stringify({
         status: 'error',
         message: `Tab "${tabName}" not found. Check SHEET_TAB_MAPPING.`
@@ -449,9 +466,16 @@ function doPost(e) {
     }
 
     // Find the date column (or create if doesn't exist)
+    Logger.log(`Looking for date column for: ${data.date}`);
     let dateCol = findDateColumn(sheet, data.date);
+    Logger.log(`findDateColumn returned: ${dateCol}`);
+
     if (dateCol === -1) {
+      Logger.log('Date column not found, creating new one...');
       dateCol = createNewDateColumn(sheet, data.date);
+      Logger.log(`createNewDateColumn returned: ${dateCol}`);
+    } else {
+      Logger.log(`Date column found at: ${dateCol}`);
     }
 
     // Find the exercise row for this specific set
