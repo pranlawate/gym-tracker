@@ -66,10 +66,12 @@ Replace the code in your Google Apps Script with this updated version:
 
 ```javascript
 // ===== CHANGELOG =====
-// 2025-12-14: Fixed critical column selection bug - rewrote createNewDateColumn
-//             to directly check columns 2,4,6,8... (R columns) in Row 1 for empty slots
-//             Previous version had array indexing bug causing it to skip to columns 7/8
-//             Now correctly fills columns B/C (2/3) first, then D/E (4/5), etc.
+// 2025-12-14: Fixed critical column selection bug - added isPartOfMerge() check
+//             Problem: Merged cells from previous syncs caused getValue() to return
+//             date values even on the second column of merged pairs (e.g., col 3, 5, 7)
+//             This caused script to skip past merged cells to next available even column
+//             Solution: Check both getValue() AND isPartOfMerge() to find truly empty cells
+//             Also added logging to help debug column selection issues
 //             Added dropdown validation for exercise alternatives in Column A
 //             Enhanced exercise change tracking with visual markers (⚠️ + yellow highlight)
 //             Updated setupWorkoutSheet to use E# prefix for exercise names
@@ -375,12 +377,18 @@ function createNewDateColumn(sheet, date) {
   // Check up to 20 column pairs (40 columns total) - should be more than enough
   for (let col = 2; col <= 40; col += 2) {
     // col is the R column, col+1 is the W column
-    const dateValue = sheet.getRange(1, col).getValue();
+    // IMPORTANT: Check if cell is part of a merged range - if so, skip it
+    const range = sheet.getRange(1, col);
+    const dateValue = range.getValue();
+    const isMerged = range.isPartOfMerge();
 
-    // If Row 1 at this R column is empty, we found our spot
-    if (!dateValue || dateValue === '') {
+    Logger.log(`Checking column ${col}: value="${dateValue}", isMerged=${isMerged}`);
+
+    // If Row 1 at this R column is empty AND not part of a merged cell, we found our spot
+    if ((!dateValue || dateValue === '') && !isMerged) {
       newColR = col;
       newColW = col + 1;
+      Logger.log(`Found empty slot at column ${col}`);
       break;
     }
   }
@@ -397,6 +405,7 @@ function createNewDateColumn(sheet, date) {
       newColR = lastCol + 2; // lastCol is even, so lastCol+2 is next even (R column)
     }
     newColW = newColR + 1;
+    Logger.log(`No empty slot found, using column ${newColR} after last column ${lastCol}`);
   }
 
   // Merge cells in Row 1 and add date
@@ -406,6 +415,7 @@ function createNewDateColumn(sheet, date) {
   sheet.getRange(2, newColR).setValue('R');
   sheet.getRange(2, newColW).setValue('W');
 
+  Logger.log(`Created date column at ${newColR}/${newColW} for date ${date}`);
   return newColR; // Return the R column index
 }
 
