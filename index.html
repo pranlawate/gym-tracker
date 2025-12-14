@@ -9274,7 +9274,9 @@
 
                 const matchingWorkouts = workouts.filter(w => {
                     const workoutDate = new Date(w.date);
-                    return w.exercise === exerciseTitle && workoutDate >= sevenDaysAgo;
+                    // Strip E# prefix from Google Sheets exercise name for comparison
+                    const sheetsExerciseName = w.exercise.replace(/^E\d+:\s*/, '').trim();
+                    return sheetsExerciseName === exerciseTitle && workoutDate >= sevenDaysAgo;
                 });
 
                 if (matchingWorkouts.length > 0) {
