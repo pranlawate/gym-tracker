@@ -66,17 +66,18 @@ Replace the code in your Google Apps Script with this updated version:
 
 ```javascript
 // ===== CHANGELOG =====
-// 2025-12-14: Fixed critical column selection bug - added isPartOfMerge() check
-//             Problem: Merged cells from previous syncs caused getValue() to return
-//             date values even on the second column of merged pairs (e.g., col 3, 5, 7)
-//             This caused script to skip past merged cells to next available even column
-//             Solution: Check both getValue() AND isPartOfMerge() to find truly empty cells
-//             Also added logging to help debug column selection issues
+// 2025-12-14: MAJOR REWRITE - Fixed column selection algorithm
+//             Problem: Script was skipping columns 2-8 and using columns 10+
+//             Root cause: Using getLastColumn() during execution caused race conditions
+//             when multiple POST requests arrived simultaneously (one per set)
+//             Solution: Complete rewrite to use fixed range (1-50 columns) read once
+//             - findDateColumn: Read fixed range, handle ⚠️ icon in date strings
+//             - createNewDateColumn: Use getMergedRanges() to build set of merged columns
+//             - Removed all Logger.log statements (Google doesn't show web app logs in UI)
 //             Added dropdown validation for exercise alternatives in Column A
 //             Enhanced exercise change tracking with visual markers (⚠️ + yellow highlight)
 //             Updated setupWorkoutSheet to use E# prefix for exercise names
-//             DEBUGGING VERSION: Added comprehensive logging to doPost, findDateColumn,
-//             and createNewDateColumn to diagnose column selection issue
+//             Fixed doGet date parsing to handle ⚠️ icon in date cells (Load Last bug)
 //
 // ===== CONFIGURATION =====
 // Set your current phase here: 'phase1' or 'phase2'
@@ -280,16 +281,12 @@ const SHEET_TAB_MAPPING = {
 function findDateColumn(sheet, targetDate) {
   // Scan Row 1 for merged cells containing the target date
   // Supports multiple date formats: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY
-  Logger.log(`findDateColumn: Looking for date ${targetDate}`);
 
-  const lastCol = sheet.getLastColumn();
-  Logger.log(`findDateColumn: Sheet has ${lastCol} columns with data`);
+  // Read Row 1 from columns 1-50 (fixed range to avoid race conditions)
+  const row1Values = sheet.getRange(1, 1, 1, 50).getValues()[0];
 
-  const row1 = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-  Logger.log(`findDateColumn: Row 1 values: ${JSON.stringify(row1)}`);
-
-  for (let col = 0; col < row1.length; col++) {
-    const cellValue = row1[col];
+  for (let col = 0; col < row1Values.length; col++) {
+    const cellValue = row1Values[col];
     if (!cellValue) continue;
 
     // Normalize date to YYYY-MM-DD format for comparison
@@ -297,18 +294,16 @@ function findDateColumn(sheet, targetDate) {
     if (cellValue instanceof Date) {
       normalizedCellDate = Utilities.formatDate(cellValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     } else {
-      normalizedCellDate = cellValue.toString();
+      // Handle strings that include the warning icon
+      const cleanValue = cellValue.toString().replace(/\s*⚠️\s*$/, '').trim();
+      normalizedCellDate = cleanValue;
     }
 
-    Logger.log(`findDateColumn: Column ${col + 1} has value "${cellValue}", normalized to "${normalizedCellDate}"`);
-
     if (normalizedCellDate === targetDate) {
-      Logger.log(`findDateColumn: MATCH found at column ${col + 1}`);
       return col + 1; // Return 1-based column index
     }
   }
 
-  Logger.log('findDateColumn: No match found, returning -1');
   return -1; // Date column not found
 }
 
@@ -377,58 +372,49 @@ function findExerciseRowByName(sheet, exerciseName, setNumber) {
 
 function createNewDateColumn(sheet, date) {
   // Create new R/W column pair for a new workout date
-  // IMPORTANT: Always scan Row 1 to find the first empty column, not last column with any data
+  // Strategy: Read Row 1 once with fixed range, find first truly empty even column
 
-  // Start checking from column B (column 2)
-  // R/W pairs are always in columns B/C, D/E, F/G, H/I, etc.
-  // So R columns are at: 2, 4, 6, 8, 10... (even numbers)
+  // Read Row 1 from columns 1-50 (should be more than enough for years of data)
+  const row1Range = sheet.getRange(1, 1, 1, 50);
+  const row1Values = row1Range.getValues()[0];
+  const row1Merges = row1Range.getMergedRanges();
 
+  // Build a set of columns that are part of merged ranges
+  const mergedColumns = new Set();
+  row1Merges.forEach(range => {
+    const startCol = range.getColumn();
+    const numCols = range.getNumColumns();
+    for (let i = 0; i < numCols; i++) {
+      mergedColumns.add(startCol + i);
+    }
+  });
+
+  // Find first empty even column (2, 4, 6, 8...) that's not merged
   let newColR = -1;
-  let newColW = -1;
+  for (let col = 2; col <= 50; col += 2) {
+    const arrayIndex = col - 1; // Convert to 0-based array index
+    const hasValue = row1Values[arrayIndex] && row1Values[arrayIndex] !== '';
+    const isMerged = mergedColumns.has(col);
 
-  // Check up to 20 column pairs (40 columns total) - should be more than enough
-  for (let col = 2; col <= 40; col += 2) {
-    // col is the R column, col+1 is the W column
-    // IMPORTANT: Check if cell is part of a merged range - if so, skip it
-    const range = sheet.getRange(1, col);
-    const dateValue = range.getValue();
-    const isMerged = range.isPartOfMerge();
-
-    Logger.log(`Checking column ${col}: value="${dateValue}", isMerged=${isMerged}`);
-
-    // If Row 1 at this R column is empty AND not part of a merged cell, we found our spot
-    if ((!dateValue || dateValue === '') && !isMerged) {
+    if (!hasValue && !isMerged) {
       newColR = col;
-      newColW = col + 1;
-      Logger.log(`Found empty slot at column ${col}`);
       break;
     }
   }
 
-  // If we didn't find an empty pair in first 20 pairs, add at the end
+  // Fallback: if no empty slot found, use column 2 (should never happen on fresh sheet)
   if (newColR === -1) {
-    const lastCol = sheet.getLastColumn();
-    // Find next even column number after lastCol
-    if (lastCol < 2) {
-      newColR = 2; // First R/W pair
-    } else if ((lastCol - 1) % 2 === 0) {
-      newColR = lastCol + 1; // lastCol is odd, so lastCol+1 is even (R column)
-    } else {
-      newColR = lastCol + 2; // lastCol is even, so lastCol+2 is next even (R column)
-    }
-    newColW = newColR + 1;
-    Logger.log(`No empty slot found, using column ${newColR} after last column ${lastCol}`);
+    newColR = 2;
   }
 
-  // Merge cells in Row 1 and add date
-  sheet.getRange(1, newColR, 1, 2).merge().setValue(date);
+  const newColW = newColR + 1;
 
-  // Add R/W headers in Row 2
+  // Create the date column
+  sheet.getRange(1, newColR, 1, 2).merge().setValue(date);
   sheet.getRange(2, newColR).setValue('R');
   sheet.getRange(2, newColW).setValue('W');
 
-  Logger.log(`Created date column at ${newColR}/${newColW} for date ${date}`);
-  return newColR; // Return the R column index
+  return newColR;
 }
 
 function getDayFromTabName(tabName) {
@@ -449,16 +435,11 @@ function doPost(e) {
     // data = { date: "2025-12-11", day: "Monday", exercise: "Incline Dumbbell Press",
     //          set: 1, weight: 22.5, reps: 10, notes: "" }
 
-    Logger.log('=== doPost START ===');
-    Logger.log(`Received data: ${JSON.stringify(data)}`);
-
     // Get the correct tab
     const tabName = SHEET_TAB_MAPPING[CURRENT_PHASE][data.day] || SHEET_TAB_MAPPING[CURRENT_PHASE]['Monday'];
-    Logger.log(`Tab name: ${tabName}`);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName);
 
     if (!sheet) {
-      Logger.log(`ERROR: Tab "${tabName}" not found`);
       return ContentService.createTextOutput(JSON.stringify({
         status: 'error',
         message: `Tab "${tabName}" not found. Check SHEET_TAB_MAPPING.`
@@ -466,16 +447,9 @@ function doPost(e) {
     }
 
     // Find the date column (or create if doesn't exist)
-    Logger.log(`Looking for date column for: ${data.date}`);
     let dateCol = findDateColumn(sheet, data.date);
-    Logger.log(`findDateColumn returned: ${dateCol}`);
-
     if (dateCol === -1) {
-      Logger.log('Date column not found, creating new one...');
       dateCol = createNewDateColumn(sheet, data.date);
-      Logger.log(`createNewDateColumn returned: ${dateCol}`);
-    } else {
-      Logger.log(`Date column found at: ${dateCol}`);
     }
 
     // Find the exercise row for this specific set
@@ -591,11 +565,16 @@ function doGet(e) {
         let dateStr = '';
         if (cellValue instanceof Date) {
           dateStr = Utilities.formatDate(cellValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-        } else if (cellValue.toString().match(/\d{4}-\d{2}-\d{2}/)) {
-          dateStr = cellValue.toString();
-        } else if (cellValue.toString().match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
-          // MM/DD/YYYY or DD/MM/YYYY - needs manual date parsing if needed
-          dateStr = cellValue.toString();
+        } else {
+          // Clean the cell value (remove warning icon if present)
+          const cleanValue = cellValue.toString().replace(/\s*⚠️\s*$/, '').trim();
+
+          if (cleanValue.match(/\d{4}-\d{2}-\d{2}/)) {
+            dateStr = cleanValue;
+          } else if (cleanValue.match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
+            // MM/DD/YYYY or DD/MM/YYYY - needs manual date parsing if needed
+            dateStr = cleanValue;
+          }
         }
 
         if (dateStr) {
